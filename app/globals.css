@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens Semai. Nama token sama di mode terang dan gelap;
+ * hanya nilainya yang berubah. Komponen selalu memakai token, bukan hex.
+ */
+:root {
+  --canvas: #fdfcfc; /* latar halaman */
+  --taupe: #f5f3f1; /* kartu dan panel */
+  --stone: #ebe8e4; /* garis tipis, divider */
+  --ink: #000000; /* teks utama, tombol hitam */
+  --graphite: #44403b; /* teks sekunder kuat */
+  --smoke: #777169; /* teks isi, deskripsi */
+  --ash: #a59f97; /* teks bantuan */
+  --accent: #beff50; /* lime: tombol utama, penanda penting */
+  --accent-soft: #d4ff8a; /* ujung atas gradien tombol utama */
+  --on-accent: #0b0b0a; /* teks di atas lime */
+  --danger: #b42318; /* pesan error */
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --canvas: #0f0e0d;
+    --taupe: #1b1a18;
+    --stone: #2e2b28;
+    --ink: #f7f5f2;
+    --graphite: #d6d1ca;
+    --smoke: #a8a29a;
+    --ash: #78726a;
+    --accent: #beff50;
+    --accent-soft: #d4ff8a;
+    --on-accent: #0b0b0a;
+    --danger: #ff8a7a;
+
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-taupe: var(--taupe);
+  --color-stone: var(--stone);
+  --color-ink: var(--ink);
+  --color-graphite: var(--graphite);
+  --color-smoke: var(--smoke);
+  --color-ash: var(--ash);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
+  --color-danger: var(--danger);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-onest), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --radius-button: 10px;
+  --radius-card: 20px;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--canvas);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 300;
+    letter-spacing: -0.02em;
+  }
+
+  ::selection {
+    background-color: var(--accent);
+    color: var(--on-accent);
+  }
+}
