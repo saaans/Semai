@@ -318,6 +318,27 @@ export type Database = {
           },
         ];
       };
+      employee_login_attempts: {
+        Row: {
+          failed_count: number;
+          locked_until: string | null;
+          phone: string;
+          updated_at: string;
+        };
+        Insert: {
+          failed_count?: number;
+          locked_until?: string | null;
+          phone: string;
+          updated_at?: string;
+        };
+        Update: {
+          failed_count?: number;
+          locked_until?: string | null;
+          phone?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       employees: {
         Row: {
           activated_at: string | null;
@@ -967,11 +988,39 @@ export type Database = {
     };
     Functions: {
       company_level: { Args: { p_company_id: string }; Returns: string };
+      add_employee: {
+        Args: {
+          p_company_id: string;
+          p_full_name: string;
+          p_phone: string;
+          p_position: string;
+          p_base_salary: number;
+        };
+        Returns: { employee_id: string; token: string; expires_at: string }[];
+      };
       complete_onboarding: {
         Args: { p_company_id: string; p_choice: string; p_plan_code?: string };
         Returns: undefined;
       };
+      current_plan_code: { Args: { p_company_id: string }; Returns: string };
+      employee_auth_account: {
+        Args: { p_phone: string };
+        Returns: { user_id: string; pin_reset: boolean }[];
+      };
+      employee_limit: { Args: { p_company_id: string }; Returns: number | null };
+      employee_login_failed: { Args: { p_phone: string }; Returns: number };
+      employee_login_locked_until: { Args: { p_phone: string }; Returns: string | null };
+      employee_login_succeeded: { Args: { p_phone: string }; Returns: undefined };
       ensure_owner_company: { Args: Record<PropertyKey, never>; Returns: string };
+      get_invitation: {
+        Args: { p_token: string };
+        Returns: {
+          company_name: string;
+          employee_name: string;
+          phone_masked: string;
+          needs_existing_pin: boolean;
+        }[];
+      };
       has_feature: {
         Args: { p_company_id: string; p_feature_key: string };
         Returns: boolean;
@@ -1000,6 +1049,14 @@ export type Database = {
           p_reason: string;
         };
         Returns: number;
+      };
+      renew_employee_invite: {
+        Args: { p_employee_id: string };
+        Returns: { token: string; expires_at: string }[];
+      };
+      reset_employee_pin: {
+        Args: { p_employee_id: string };
+        Returns: { token: string; expires_at: string; user_id: string }[];
       };
       my_employee_ids: { Args: Record<PropertyKey, never>; Returns: string[] };
       plan_limit: {

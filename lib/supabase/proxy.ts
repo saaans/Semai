@@ -53,6 +53,18 @@ export async function updateSession(request: NextRequest) {
   // yang sebenarnya ada di layout /owner dan /admin (lib/auth/session.ts).
   const { pathname, search } = request.nextUrl;
 
+  // Area karyawan: halaman masuk dan aktivasi terbuka untuk tamu.
+  if (
+    !claims &&
+    matches(pathname, "/app") &&
+    !EMPLOYEE_PUBLIC.some((prefix) => matches(pathname, prefix))
+  ) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/app/masuk";
+    url.search = "";
+    return redirectWithCookies(url, response);
+  }
+
   if (!claims && PROTECTED_PREFIXES.some((prefix) => matches(pathname, prefix))) {
     const url = request.nextUrl.clone();
     url.pathname = "/masuk";
@@ -80,8 +92,11 @@ export async function updateSession(request: NextRequest) {
   return response;
 }
 
-/** Wajib login. /app (karyawan) diatur di langkah login karyawan. */
+/** Wajib login owner. /app (karyawan) diatur terpisah di atas. */
 const PROTECTED_PREFIXES = ["/owner", "/admin", "/lengkapi-wa", "/atur-password"];
+
+/** Bagian /app yang boleh dibuka tanpa login. */
+const EMPLOYEE_PUBLIC = ["/app/masuk", "/app/aktivasi"];
 
 /** Hanya untuk tamu. */
 const GUEST_ONLY = ["/masuk", "/daftar"];

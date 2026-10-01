@@ -1,33 +1,66 @@
 import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Tag } from "@/components/ui/tag";
+import { requireEmployee } from "@/lib/auth/session";
+import { keluarKaryawan } from "./actions";
+import { EmployeeShell } from "./_components/employee-shell";
 
 export const metadata: Metadata = { title: "Absen" };
 
-export default function EmployeeAppPage() {
+function LogoutKaryawan() {
   return (
-    <div className="mx-auto flex min-h-dvh max-w-md flex-col gap-6 px-5 py-6">
-      <header className="flex items-center justify-between">
-        <span className="font-display text-2xl tracking-tight">semai</span>
-        <Tag>Belum absen</Tag>
-      </header>
-      <main className="flex flex-1 flex-col gap-6">
-        <div className="flex flex-col gap-1">
-          <p className="text-sm text-smoke">Jadwal hari ini</p>
-          <h1 className="text-3xl">Halo</h1>
-        </div>
-        <Card className="flex flex-col gap-4">
-          <div>
-            <p className="text-sm text-smoke">Jam kerja</p>
-            <p className="mt-1 font-mono text-lg">08.00 – 17.00</p>
-          </div>
-          <Button fullWidth disabled>
-            Absen masuk
-          </Button>
-          <p className="text-sm text-ash">Absen selfie + GPS dibuat di langkah berikutnya.</p>
+    <form action={keluarKaryawan}>
+      <button
+        type="submit"
+        className="min-h-11 rounded-button px-2 text-sm text-graphite underline-offset-4 hover:text-ink hover:underline"
+      >
+        Keluar
+      </button>
+    </form>
+  );
+}
+
+export default async function EmployeeAppPage() {
+  const { memberships } = await requireEmployee();
+  const current = memberships[0];
+
+  if (!current) {
+    return (
+      <EmployeeShell header={<LogoutKaryawan />}>
+        <Card>
+          <CardTitle>Akunmu sedang nonaktif</CardTitle>
+          <CardDescription>
+            Kamu belum terdaftar aktif di usaha mana pun. Hubungi pemilik usaha kalau ini keliru.
+          </CardDescription>
         </Card>
-      </main>
-    </div>
+      </EmployeeShell>
+    );
+  }
+
+  return (
+    <EmployeeShell header={<LogoutKaryawan />}>
+      <div className="flex flex-col gap-1">
+        <p className="text-sm text-smoke">{current.companyName}</p>
+        <h1 className="text-3xl">Halo, {current.fullName.split(/\s+/)[0]}</h1>
+      </div>
+      <Card className="flex flex-col gap-4">
+        <Tag className="self-start">Belum absen</Tag>
+        <Button fullWidth disabled>
+          Absen masuk
+        </Button>
+        <p className="text-sm text-ash">Absen selfie + GPS dibuat di langkah berikutnya.</p>
+      </Card>
+      {memberships.length > 1 && (
+        <p className="text-sm text-smoke">
+          Kamu juga terdaftar di{" "}
+          {memberships
+            .slice(1)
+            .map((m) => m.companyName)
+            .join(", ")}
+          .
+        </p>
+      )}
+    </EmployeeShell>
   );
 }
