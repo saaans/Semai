@@ -6,6 +6,7 @@ import { Tag } from "@/components/ui/tag";
 import { getMonthlyRecap } from "@/lib/attendance/owner";
 import type { RecapSummary } from "@/lib/attendance/recap";
 import { requireOwner } from "@/lib/auth/session";
+import { cn } from "@/lib/cn";
 import { formatMinutes } from "@/lib/format";
 import { MonthNav } from "../_components/month-nav";
 
@@ -76,7 +77,7 @@ export default async function RekapAbsenPage({ searchParams }: { searchParams: P
                     ].map(([label, value]) => (
                       <div key={label}>
                         <dt className="text-xs text-smoke">{label}</dt>
-                        <dd className="font-mono text-ink">{value}</dd>
+                        <dd className={cn("tabular-nums", value === 0 ? "text-ash" : "text-ink")}>{value}</dd>
                       </div>
                     ))}
                   </dl>
@@ -91,43 +92,59 @@ export default async function RekapAbsenPage({ searchParams }: { searchParams: P
 
           {/* Laptop: tabel */}
           <div className="hidden overflow-x-auto rounded-card bg-taupe md:block">
-            <table className="w-full text-sm">
+            <table className="w-full table-fixed text-sm">
+              <colgroup>
+                <col />
+                <col className="w-20" />
+                <col className="w-20" />
+                <col className="w-36" />
+                <col className="w-24" />
+                <col className="w-28" />
+                <col className="w-56" />
+              </colgroup>
               <thead>
-                <tr className="border-b border-stone text-left text-smoke">
-                  <th className="px-5 py-3 font-normal">Karyawan</th>
+                <tr className="text-left text-xs text-ash">
+                  <th className="px-6 py-3 font-normal">Karyawan</th>
                   <th className="px-3 py-3 text-right font-normal">Hadir</th>
                   <th className="px-3 py-3 text-right font-normal">Telat</th>
+                  <th className="px-3 py-3 text-right font-normal">Total telat</th>
                   <th className="px-3 py-3 text-right font-normal">Izin/sakit</th>
                   <th className="px-3 py-3 text-right font-normal">Tidak masuk</th>
-                  <th className="px-5 py-3 text-right font-normal">Lembur disetujui</th>
+                  <th className="px-6 py-3 text-right font-normal whitespace-nowrap">Lembur disetujui</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-stone">
-                {recap.employees.map((employee) => (
-                  <tr key={employee.id} className="hover:bg-stone/50">
-                    <td className="px-5 py-3">
-                      <Link href={`/owner/absen/${employee.id}?bulan=${recap.month}`} className="font-medium text-ink underline-offset-4 hover:underline">
-                        {employee.name}
-                      </Link>
-                      {!employee.active && <span className="ml-2 text-xs text-ash">Nonaktif</span>}
-                    </td>
-                    <td className="px-3 py-3 text-right font-mono">{employee.summary.hadir}</td>
-                    <td className="px-3 py-3 text-right font-mono">
-                      {employee.summary.telatKali}
-                      {employee.summary.telatMenit > 0 && (
-                        <span className="block text-xs text-smoke">{formatMinutes(employee.summary.telatMenit)}</span>
-                      )}
-                    </td>
-                    <td className="px-3 py-3 text-right font-mono">{employee.summary.izin}</td>
-                    <td className="px-3 py-3 text-right font-mono">{employee.summary.tidakMasuk}</td>
-                    <td className="px-5 py-3 text-right font-mono">
-                      {lembur(employee.summary)}
-                      {employee.summary.lemburMenunggu > 0 && (
-                        <span className="block text-xs text-smoke">{formatMinutes(employee.summary.lemburMenunggu)} menunggu</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+              <tbody className="divide-y divide-stone border-t border-stone">
+                {recap.employees.map((employee) => {
+                  const s = employee.summary;
+                  return (
+                    <tr key={employee.id} className="transition-colors hover:bg-ink/[0.03]">
+                      <td className="px-6 py-3">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <span aria-hidden className="flex size-9 shrink-0 items-center justify-center rounded-full border border-stone bg-canvas text-xs font-medium text-graphite">
+                            {employee.name.trim().charAt(0).toUpperCase() || "?"}
+                          </span>
+                          <Link href={`/owner/absen/${employee.id}?bulan=${recap.month}`} className="truncate font-medium text-ink underline-offset-4 hover:underline">
+                            {employee.name}
+                          </Link>
+                          {!employee.active && <span className="shrink-0 text-xs text-ash">Nonaktif</span>}
+                        </div>
+                      </td>
+                      <Num value={s.hadir} />
+                      <Num value={s.telatKali} />
+                      <td className={cn("px-3 py-3 text-right tabular-nums", s.telatMenit > 0 ? "text-ink" : "text-ash")}>
+                        {s.telatMenit > 0 ? formatMinutes(s.telatMenit) : "–"}
+                      </td>
+                      <Num value={s.izin} />
+                      <Num value={s.tidakMasuk} />
+                      <td className="px-6 py-3 text-right tabular-nums">
+                        <span className={s.lemburDisetujui > 0 ? "text-ink" : "text-ash"}>{lembur(s)}</span>
+                        {s.lemburMenunggu > 0 && (
+                          <span className="block text-xs whitespace-nowrap text-smoke">+{formatMinutes(s.lemburMenunggu)} menunggu</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -139,4 +156,9 @@ export default async function RekapAbsenPage({ searchParams }: { searchParams: P
       </p>
     </>
   );
+}
+
+/** Sel angka: nol dibuat samar supaya angka yang penting lebih terbaca. */
+function Num({ value }: { value: number }) {
+  return <td className={cn("px-3 py-3 text-right tabular-nums", value === 0 ? "text-ash" : "text-ink")}>{value}</td>;
 }
