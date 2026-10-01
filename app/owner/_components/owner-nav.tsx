@@ -41,9 +41,9 @@ function MenuLinks({ groups, pathname }: { groups: MenuItem[][]; pathname: strin
                 <MenuIcon href={item.href} />
                 <span className="flex-1 truncate">{item.label}</span>
                 {item.state === "terkunci" && (
-                  <span className="flex shrink-0 items-center gap-1 text-xs text-ash">
+                  <span className="shrink-0 text-gold" title={item.planLabel ? `Buka di paket ${item.planLabel}` : "Terkunci"}>
                     <LockIcon />
-                    {item.planLabel}
+                    <span className="sr-only">{item.planLabel ? `Terkunci, buka di paket ${item.planLabel}` : "Terkunci"}</span>
                   </span>
                 )}
                 {item.state === "segera" && <span className="shrink-0 text-xs text-ash">Segera</span>}
@@ -51,9 +51,7 @@ function MenuLinks({ groups, pathname }: { groups: MenuItem[][]; pathname: strin
             );
             const className = cn(
               "flex min-h-10 items-center gap-3 rounded-button px-3 text-sm transition-colors",
-              active
-                ? "bg-taupe font-medium text-ink shadow-[inset_0_0_0_1px_var(--stone)]"
-                : "text-graphite hover:bg-taupe/70 hover:text-ink",
+              active ? "bg-ink/[0.05] font-medium text-ink" : "text-graphite hover:bg-ink/[0.03] hover:text-ink",
             );
 
             // Halaman yang belum dibuat (bukan fitur paket) tidak bisa diklik.
@@ -156,7 +154,7 @@ export function OwnerNav({
           <nav
             id="owner-menu"
             aria-label="Menu owner"
-            className="absolute inset-y-0 left-0 flex w-[min(20rem,85vw)] flex-col gap-6 overflow-y-auto bg-canvas px-4 py-4"
+            className="absolute inset-y-0 left-0 flex w-[min(20rem,85vw)] flex-col gap-6 overflow-y-auto bg-sidebar px-4 py-4"
           >
             <div className="flex items-start justify-between gap-2 px-1">
               {brand}
@@ -177,7 +175,7 @@ export function OwnerNav({
       )}
 
       {/* Laptop */}
-      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-stone lg:flex">
+      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-stone bg-sidebar lg:flex">
         <div className="px-5 pt-6 pb-5">{brand}</div>
         <nav aria-label="Menu owner" className="min-h-0 flex-1 overflow-y-auto px-3 pb-4">
           <MenuLinks groups={groups} pathname={pathname} />
@@ -250,7 +248,7 @@ function AccountMenu({ account, logout }: { account: OwnerAccount; logout: React
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-controls="account-menu"
-        className="flex w-full items-center gap-3 rounded-button p-2 text-left transition-colors hover:bg-taupe focus-visible:outline-2 focus-visible:outline-ink"
+        className="flex w-full items-center gap-3 rounded-button p-2 text-left transition-colors hover:bg-ink/[0.04] focus-visible:outline-2 focus-visible:outline-ink"
       >
         <span
           aria-hidden

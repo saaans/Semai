@@ -14,8 +14,10 @@ import { QUOTA_DISMISS_COOKIE } from "@/lib/billing/state";
 import { getRemoteStatus } from "@/lib/employees/remote";
 import { formatDate, formatMinutes, formatTime, timezoneLabel } from "@/lib/format";
 import { parseProgress } from "@/lib/onboarding/data";
+import { cn } from "@/lib/cn";
 import { createClient } from "@/lib/supabase/server";
-import { AbsenInfo, koreksiInitial, STATUS_LABEL } from "./_components/absen-info";
+import { formatDistance, koreksiInitial, STATUS_LABEL } from "./_components/absen-info";
+import { AbsenPhoto } from "./_components/absen-photo";
 import { AutoRefresh } from "./_components/auto-refresh";
 import { KoreksiButton } from "./_components/koreksi-button";
 import { LemburActions } from "./_components/lembur-actions";
@@ -159,7 +161,8 @@ export default async function OwnerPage() {
             <span className="text-sm text-smoke tabular-nums">{total} orang</span>
           </div>
           <Card className="p-0 sm:p-0">
-            <ul className="flex flex-col divide-y divide-stone">
+            <EntryHeader />
+            <ul className="flex flex-col divide-y divide-stone md:border-t md:border-stone">
               {board.entries.map((entry) => (
                 <EntryRow key={entry.employeeId} entry={entry} timezone={tz} showClockOut={board.attendanceMode === "masuk_pulang"} today={board.today} />
               ))}
@@ -188,6 +191,21 @@ function EntryTag({ entry }: { entry: TodayEntry }) {
   }
 }
 
+/** Kolom tabel absen di layar lebar: karyawan, masuk, pulang, status, aksi. */
+const ROW_GRID = "md:grid md:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)_minmax(0,0.8fr)_10.5rem_6.5rem] md:items-center md:gap-4";
+
+function EntryHeader() {
+  return (
+    <div className={cn("hidden px-6 py-3 text-xs text-ash", ROW_GRID)}>
+      <span>Karyawan</span>
+      <span>Masuk</span>
+      <span>Pulang</span>
+      <span>Status</span>
+      <span className="sr-only">Aksi</span>
+    </div>
+  );
+}
+
 function EntryRow({
   entry,
   timezone,
@@ -199,6 +217,8 @@ function EntryRow({
   showClockOut: boolean;
   today: string;
 }) {
+  const a = entry.attendance;
+  const hadir = a?.status === "hadir";
   const meta = [
     entry.isRemote ? "Remote" : null,
     entry.position,
@@ -208,39 +228,105 @@ function EntryRow({
     .filter(Boolean)
     .join(" · ");
 
+  // Catatan yang belum terlihat di kolom lain (telat sudah ada di status).
+  const notes: string[] = [];
+  if (a && hadir) {
+    if (a.earlyLeaveMinutes > 0) notes.push(`Pulang cepat ${formatMinutes(a.earlyLeaveMinutes)}`);
+    if (a.overtimeMinutes > 0) {
+      const status = a.overtimeStatus === "disetujui" ? "disetujui" : a.overtimeStatus === "ditolak" ? "ditolak" : "menunggu persetujuan";
+      notes.push(`Lembur ${formatMinutes(a.overtimeMinutes)} (${status})`);
+    }
+    if (a.offline) notes.push("Dikirim saat offline");
+  }
+  if (a?.correctionReason) notes.push(`Dikoreksi: ${a.correctionReason}`);
+
+  const distance = (meters: number | null) => {
+    if (meters === null) return entry.isRemote ? "Absen remote" : null;
+    return `${formatDistance(meters)} dari lokasi`;
+  };
+  const clockIn = hadir && a?.clockInAt ? formatTime(a.clockInAt, timezone) : null;
+  const clockOut = hadir && a?.clockOutAt ? formatTime(a.clockOutAt, timezone) : null;
+  const showPhoto = hadir && a && !a.photosDeleted && a.clockInAt && a.clockInPhotoUrl;
+
   return (
-    <li className="flex gap-3 px-4 py-4 sm:px-6">
-      <span aria-hidden className="mt-0.5 hidden size-9 shrink-0 sm:flex items-center justify-center rounded-full border border-stone bg-canvas text-xs font-medium text-graphite">
-        {entry.name.trim().charAt(0).toUpperCase() || "?"}
-      </span>
-      <div className="flex min-w-0 flex-1 flex-col gap-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <Link href={`/owner/absen/${entry.employeeId}`} className="font-medium text-ink underline-offset-4 hover:underline">
-              {entry.name}
-            </Link>
-            {meta && <p className="truncate text-sm text-smoke">{meta}</p>}
-          </div>
-          <div className="flex shrink-0 flex-col items-end sm:flex-row sm:items-center sm:gap-1">
-            <EntryTag entry={entry} />
-            <div className="-mb-2 sm:-my-2">
-              <KoreksiButton
-                employeeId={entry.employeeId}
-                employeeName={entry.name}
-                workDate={entry.workDate}
-                dateLabel={dayLabel(entry.workDate)}
-                initial={koreksiInitial(entry.attendance, timezone)}
-                showClockOut={showClockOut || Boolean(entry.attendance?.clockOutAt)}
-                label={entry.attendance ? "Koreksi" : "Catat manual"}
-              />
-            </div>
-          </div>
+    <li className={cn("flex flex-col gap-3 px-4 py-4 md:px-6", ROW_GRID)}>
+      {/* Karyawan */}
+      <div className="flex min-w-0 items-center gap-3">
+        {showPhoto ? (
+          <AbsenPhoto url={a.clockInPhotoUrl} alt={`Foto masuk ${entry.name}`} label="Masuk" size="sm" />
+        ) : (
+          <span aria-hidden className="flex size-10 shrink-0 items-center justify-center rounded-full border border-stone bg-canvas text-sm font-medium text-graphite">
+            {entry.name.trim().charAt(0).toUpperCase() || "?"}
+          </span>
+        )}
+        <div className="min-w-0 flex-1">
+          <Link href={`/owner/absen/${entry.employeeId}`} className="block truncate font-medium text-ink underline-offset-4 hover:underline">
+            {entry.name}
+          </Link>
+          {meta && <p className="truncate text-sm text-smoke">{meta}</p>}
         </div>
-        {entry.attendance && (
-          <AbsenInfo attendance={entry.attendance} timezone={timezone} name={entry.name} radiusM={entry.radiusM} remote={entry.isRemote} />
+        <span className="shrink-0 md:hidden">
+          <EntryTag entry={entry} />
+        </span>
+      </div>
+
+      {/* HP: jam masuk dan pulang satu baris, aksi di kanan */}
+      <div className="flex items-center justify-between gap-3 pl-[3.25rem] text-sm md:hidden">
+        <span className="min-w-0 truncate text-smoke">
+          {hadir && (
+            <>
+              Masuk <span className="font-mono text-ink">{clockIn ?? "–"}</span>
+              {(showClockOut || clockOut) && (
+                <>
+                  {"  ·  "}Pulang <span className="font-mono text-ink">{clockOut ?? "–"}</span>
+                </>
+              )}
+            </>
+          )}
+        </span>
+        <span className="-my-2 shrink-0">
+          <KoreksiCell entry={entry} timezone={timezone} showClockOut={showClockOut} />
+        </span>
+      </div>
+
+      {/* Layar lebar: kolom terpisah */}
+      <div className="hidden min-w-0 md:block">
+        <p className="font-mono text-sm text-ink">{clockIn ?? "–"}</p>
+        {clockIn && distance(a?.clockInDistanceM ?? null) && (
+          <p className="truncate text-xs text-smoke">{distance(a?.clockInDistanceM ?? null)}</p>
         )}
       </div>
+      <div className="hidden min-w-0 md:block">
+        <p className="font-mono text-sm text-ink">{clockOut ?? "–"}</p>
+        {clockOut && distance(a?.clockOutDistanceM ?? null) && (
+          <p className="truncate text-xs text-smoke">{distance(a?.clockOutDistanceM ?? null)}</p>
+        )}
+      </div>
+      <div className="hidden md:block">
+        <EntryTag entry={entry} />
+      </div>
+      <div className="-my-2 hidden justify-end md:flex">
+        <KoreksiCell entry={entry} timezone={timezone} showClockOut={showClockOut} />
+      </div>
+
+      {notes.length > 0 && (
+        <p className="pl-[3.25rem] text-xs text-smoke md:col-span-full md:-mt-2">{notes.join(" · ")}</p>
+      )}
     </li>
+  );
+}
+
+function KoreksiCell({ entry, timezone, showClockOut }: { entry: TodayEntry; timezone: string; showClockOut: boolean }) {
+  return (
+    <KoreksiButton
+      employeeId={entry.employeeId}
+      employeeName={entry.name}
+      workDate={entry.workDate}
+      dateLabel={dayLabel(entry.workDate)}
+      initial={koreksiInitial(entry.attendance, timezone)}
+      showClockOut={showClockOut || Boolean(entry.attendance?.clockOutAt)}
+      label={entry.attendance ? "Koreksi" : "Catat manual"}
+    />
   );
 }
 
