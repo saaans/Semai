@@ -259,6 +259,7 @@ export type Database = {
       companies: {
         Row: {
           archived_at: string | null;
+          address: string | null;
           attendance_mode: string;
           branch_count: number;
           business_type: string | null;
@@ -268,15 +269,18 @@ export type Database = {
           employee_range: string | null;
           id: string;
           last_active_at: string | null;
+          logo_path: string | null;
           name: string | null;
           onboarding: NonNullable<Json>;
           onboarding_completed_at: string | null;
+          phone: string | null;
           suspended_at: string | null;
           timezone: string;
           updated_at: string;
         };
         Insert: {
           archived_at?: string | null;
+          address?: string | null;
           attendance_mode?: string;
           branch_count?: number;
           business_type?: string | null;
@@ -286,15 +290,18 @@ export type Database = {
           employee_range?: string | null;
           id?: string;
           last_active_at?: string | null;
+          logo_path?: string | null;
           name?: string | null;
           onboarding?: NonNullable<Json>;
           onboarding_completed_at?: string | null;
+          phone?: string | null;
           suspended_at?: string | null;
           timezone?: string;
           updated_at?: string;
         };
         Update: {
           archived_at?: string | null;
+          address?: string | null;
           attendance_mode?: string;
           branch_count?: number;
           business_type?: string | null;
@@ -304,9 +311,11 @@ export type Database = {
           employee_range?: string | null;
           id?: string;
           last_active_at?: string | null;
+          logo_path?: string | null;
           name?: string | null;
           onboarding?: NonNullable<Json>;
           onboarding_completed_at?: string | null;
+          phone?: string | null;
           suspended_at?: string | null;
           timezone?: string;
           updated_at?: string;
@@ -1052,7 +1061,23 @@ export type Database = {
         Args: { p_company_id: string; p_choice: string; p_plan_code?: string };
         Returns: undefined;
       };
+      correct_attendance: {
+        Args: {
+          p_company_id: string;
+          p_employee_id: string;
+          p_work_date: string;
+          p_status: string;
+          p_clock_in: string | null;
+          p_clock_out: string | null;
+          p_reason: string;
+        };
+        Returns: Database["public"]["Tables"]["attendances"]["Row"][];
+      };
       current_plan_code: { Args: { p_company_id: string }; Returns: string };
+      decide_overtime: {
+        Args: { p_attendance_id: string; p_approve: boolean };
+        Returns: Database["public"]["Tables"]["attendances"]["Row"][];
+      };
       employee_auth_account: {
         Args: { p_phone: string };
         Returns: { user_id: string; pin_reset: boolean }[];
@@ -1099,6 +1124,22 @@ export type Database = {
           p_reason: string;
         };
         Returns: number;
+      };
+      set_company_logo: {
+        Args: { p_company_id: string; p_logo_path: string | null };
+        Returns: string | null;
+      };
+      update_company_profile: {
+        Args: {
+          p_company_id: string;
+          p_name: string;
+          p_business_type: string;
+          p_city: string;
+          p_timezone: string;
+          p_address: string | null;
+          p_phone: string | null;
+        };
+        Returns: Database["public"]["Tables"]["companies"]["Row"][];
       };
       renew_employee_invite: {
         Args: { p_employee_id: string };

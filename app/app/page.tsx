@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { CompanyLogo } from "@/components/company-logo";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { getAbsenHome } from "@/lib/attendance/today";
 import { requireEmployee } from "@/lib/auth/session";
@@ -60,9 +61,12 @@ export default async function EmployeeAppPage({
       )}
 
       <div className="flex flex-col gap-1">
-        <p className="text-sm text-smoke">
-          {current.companyName} · {formatDate(new Date(), current.timezone)}
-        </p>
+        <div className="flex items-center gap-2">
+          <CompanyLogo url={current.logoUrl} name={current.companyName} className="size-7 rounded-[7px]" />
+          <p className="text-sm text-smoke">
+            {current.companyName} · {formatDate(new Date(), current.timezone)}
+          </p>
+        </div>
         <h1 className="text-3xl">Halo, {current.fullName.split(/\s+/)[0]}</h1>
         {home.schedule && (
           <p className="text-sm text-smoke">

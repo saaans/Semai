@@ -1,6 +1,7 @@
 import "server-only";
 import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
+import { companyLogoUrl } from "@/lib/company/logo";
 import { createClient } from "@/lib/supabase/server";
 
 const EMPLOYEE_EMAIL_DOMAIN = "@karyawan.semai.internal";
@@ -147,6 +148,8 @@ export type EmployeeMembership = {
   employeeId: string;
   companyId: string;
   companyName: string;
+  /** URL publik logo usaha, null kalau belum ada. */
+  logoUrl: string | null;
   timezone: string;
   fullName: string;
 };
@@ -165,7 +168,7 @@ export async function requireEmployee() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("employees")
-    .select("id, company_id, full_name, companies (name, timezone)")
+    .select("id, company_id, full_name, companies (name, timezone, logo_path)")
     .eq("user_id", user.id)
     .eq("status", "aktif")
     .order("activated_at");
@@ -178,6 +181,7 @@ export async function requireEmployee() {
     employeeId: row.id,
     companyId: row.company_id,
     companyName: row.companies?.name ?? "Usaha",
+    logoUrl: companyLogoUrl(row.companies?.logo_path),
     timezone: row.companies?.timezone ?? "Asia/Jakarta",
     fullName: row.full_name,
   }));
