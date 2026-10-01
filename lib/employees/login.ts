@@ -25,7 +25,10 @@ export async function signInWithPin(phone: string, pin: string): Promise<PinLogi
   });
   if (lockError) {
     console.error("[login-pin] cek kunci", lockError);
-    return { ok: false, message: "Ada kendala di server. Coba lagi sebentar lagi." };
+    return {
+      ok: false,
+      message: `Ada kendala di server. Coba lagi sebentar lagi. (kode: kunci:${lockError.code})`,
+    };
   }
   if (lockedUntil) return { ok: false, message: lockedMessage(lockedUntil) };
 
@@ -40,7 +43,7 @@ export async function signInWithPin(phone: string, pin: string): Promise<PinLogi
       console.error("[login-pin] masuk", error);
       return {
         ok: false,
-        message: "Ada kendala saat menghubungi server. Cek koneksi internet, lalu coba lagi.",
+        message: `Ada kendala saat menghubungi server. Cek koneksi internet, lalu coba lagi. (kode: login:${error.code ?? error.status})`,
       };
     }
     const { data: remaining } = await admin.rpc("employee_login_failed", { p_phone: phone });

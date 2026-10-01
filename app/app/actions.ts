@@ -23,6 +23,19 @@ const INVALID_LINK =
   "Link aktivasi tidak berlaku lagi. Minta link baru ke pemilik usaha lewat WA.";
 const SERVER_ERROR = "Ada kendala di server. Cek koneksi internet, lalu coba lagi.";
 
+/**
+ * Pesan error dengan kode singkat (langkah + kode Supabase) supaya penyebab
+ * bisa dilaporkan dari layar HP tanpa membuka log. Tidak berisi data rahasia.
+ */
+function serverError(step: string, error?: unknown): FormState {
+  console.error(`[aktivasi] ${step}`, error);
+  const code =
+    error && typeof error === "object" && "code" in error && typeof error.code === "string"
+      ? `:${error.code}`
+      : "";
+  return { message: `${SERVER_ERROR} (kode: ${step}${code})` };
+}
+
 function text(formData: FormData, key: string): string {
   const value = formData.get(key);
   return typeof value === "string" ? value : "";
@@ -71,8 +84,7 @@ async function aktivasiImpl(formData: FormData): Promise<FormState> {
     .eq("invite_token_hash", tokenHash)
     .maybeSingle();
   if (employeeError) {
-    console.error("[aktivasi] baca karyawan", employeeError);
-    return { message: SERVER_ERROR };
+    return serverError("baca-karyawan", employeeError);
   }
   if (
     !employee ||
@@ -87,8 +99,7 @@ async function aktivasiImpl(formData: FormData): Promise<FormState> {
     p_phone: employee.phone,
   });
   if (accountError) {
-    console.error("[aktivasi] cek akun", accountError);
-    return { message: SERVER_ERROR };
+    return serverError("cek-akun", accountError);
   }
   const account = accounts[0];
   let userId: string;
@@ -114,8 +125,7 @@ async function aktivasiImpl(formData: FormData): Promise<FormState> {
         app_metadata: { pin_reset: false },
       });
       if (error) {
-        console.error("[aktivasi] ganti PIN", error);
-        return { message: SERVER_ERROR };
+        return serverError("ganti-pin", error);
       }
       userId = account.user_id;
     } else {
@@ -127,8 +137,7 @@ async function aktivasiImpl(formData: FormData): Promise<FormState> {
         app_metadata: { role: "employee" },
       });
       if (error || !data.user) {
-        console.error("[aktivasi] buat akun", error);
-        return { message: SERVER_ERROR };
+        return serverError("buat-akun", error);
       }
       userId = data.user.id;
     }
@@ -140,8 +149,7 @@ async function aktivasiImpl(formData: FormData): Promise<FormState> {
       password,
     });
     if (signInError) {
-      console.error("[aktivasi] masuk", signInError);
-      return { message: SERVER_ERROR };
+      return serverError("masuk", signInError);
     }
   }
 
@@ -159,8 +167,7 @@ async function aktivasiImpl(formData: FormData): Promise<FormState> {
     .eq("invite_token_hash", tokenHash)
     .select("id");
   if (linkError) {
-    console.error("[aktivasi] sambungkan akun", linkError);
-    return { message: SERVER_ERROR };
+    return serverError("sambung", linkError);
   }
   if (linked.length === 0) return { message: INVALID_LINK };
 
@@ -177,7 +184,12 @@ async function guarded(name: string, run: () => Promise<FormState>): Promise<For
   } catch (error) {
     unstable_rethrow(error); // redirect() harus diteruskan
     console.error(`[${name}]`, error);
-    return { message: SERVER_ERROR };
+    const isConfig = error instanceof Error && error.message.startsWith("Konfigurasi server");
+    return {
+      message: isConfig
+        ? `Server belum dikonfigurasi lengkap. Hubungi pemilik usaha. (kode: ${name}:env)`
+        : `${SERVER_ERROR} (kode: ${name})`,
+    };
   }
 }
 
