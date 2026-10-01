@@ -169,7 +169,10 @@ export async function requireEmployee() {
     .eq("user_id", user.id)
     .eq("status", "aktif")
     .order("activated_at");
-  if (error) throw new Error("Gagal memuat data karyawan. Coba muat ulang halaman.");
+  if (error) {
+    console.error("[requireEmployee]", error);
+    throw new Error("Gagal memuat data karyawan. Coba muat ulang halaman.");
+  }
 
   const memberships: EmployeeMembership[] = data.map((row) => ({
     employeeId: row.id,

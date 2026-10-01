@@ -1,6 +1,6 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
 import { fieldErrors } from "@/lib/auth/schemas";
 import { signInWithPin } from "@/lib/employees/login";
 import {
@@ -29,7 +29,7 @@ function text(formData: FormData, key: string): string {
 }
 
 /** Masuk karyawan: nomor HP + PIN. */
-export async function masukKaryawan(_prev: FormState, formData: FormData): Promise<FormState> {
+async function masukKaryawanImpl(formData: FormData): Promise<FormState> {
   const values = { phone: text(formData, "phone") };
   const parsed = masukKaryawanSchema.safeParse({ ...values, pin: text(formData, "pin") });
   if (!parsed.success) return { errors: fieldErrors(parsed.error), values };
@@ -59,7 +59,7 @@ export async function masukKaryawan(_prev: FormState, formData: FormData): Promi
  * direset) membuat PIN baru; nomor yang sudah aktif di usaha lain memakai
  * PIN yang sudah ada.
  */
-export async function aktivasi(_prev: FormState, formData: FormData): Promise<FormState> {
+async function aktivasiImpl(formData: FormData): Promise<FormState> {
   const token = text(formData, "token");
   if (!isInviteTokenFormat(token)) return { message: INVALID_LINK };
   const tokenHash = hashInviteToken(token);
@@ -70,7 +70,10 @@ export async function aktivasi(_prev: FormState, formData: FormData): Promise<Fo
     .select("id, phone, full_name, status, invite_expires_at")
     .eq("invite_token_hash", tokenHash)
     .maybeSingle();
-  if (employeeError) return { message: SERVER_ERROR };
+  if (employeeError) {
+    console.error("[aktivasi] baca karyawan", employeeError);
+    return { message: SERVER_ERROR };
+  }
   if (
     !employee ||
     employee.status === "nonaktif" ||
@@ -83,7 +86,10 @@ export async function aktivasi(_prev: FormState, formData: FormData): Promise<Fo
   const { data: accounts, error: accountError } = await admin.rpc("employee_auth_account", {
     p_phone: employee.phone,
   });
-  if (accountError) return { message: SERVER_ERROR };
+  if (accountError) {
+    console.error("[aktivasi] cek akun", accountError);
+    return { message: SERVER_ERROR };
+  }
   const account = accounts[0];
   let userId: string;
 
@@ -107,7 +113,10 @@ export async function aktivasi(_prev: FormState, formData: FormData): Promise<Fo
         password,
         app_metadata: { pin_reset: false },
       });
-      if (error) return { message: SERVER_ERROR };
+      if (error) {
+        console.error("[aktivasi] ganti PIN", error);
+        return { message: SERVER_ERROR };
+      }
       userId = account.user_id;
     } else {
       const { data, error } = await admin.auth.admin.createUser({
@@ -117,7 +126,10 @@ export async function aktivasi(_prev: FormState, formData: FormData): Promise<Fo
         user_metadata: { full_name: employee.full_name, phone: employee.phone },
         app_metadata: { role: "employee" },
       });
-      if (error || !data.user) return { message: SERVER_ERROR };
+      if (error || !data.user) {
+        console.error("[aktivasi] buat akun", error);
+        return { message: SERVER_ERROR };
+      }
       userId = data.user.id;
     }
 
@@ -127,7 +139,10 @@ export async function aktivasi(_prev: FormState, formData: FormData): Promise<Fo
       email: employeeEmail(employee.phone),
       password,
     });
-    if (signInError) return { message: SERVER_ERROR };
+    if (signInError) {
+      console.error("[aktivasi] masuk", signInError);
+      return { message: SERVER_ERROR };
+    }
   }
 
   // Sambungkan akun ke data karyawan. Syarat token yang sama mencegah link dipakai dua kali.
@@ -143,10 +158,35 @@ export async function aktivasi(_prev: FormState, formData: FormData): Promise<Fo
     .eq("id", employee.id)
     .eq("invite_token_hash", tokenHash)
     .select("id");
-  if (linkError) return { message: SERVER_ERROR };
+  if (linkError) {
+    console.error("[aktivasi] sambungkan akun", linkError);
+    return { message: SERVER_ERROR };
+  }
   if (linked.length === 0) return { message: INVALID_LINK };
 
   redirect("/app");
+}
+
+/**
+ * Jalankan aksi dan ubah error tak terduga (env belum diisi, Supabase menolak)
+ * jadi pesan biasa, plus log di server supaya penyebabnya terlihat di Vercel Logs.
+ */
+async function guarded(name: string, run: () => Promise<FormState>): Promise<FormState> {
+  try {
+    return await run();
+  } catch (error) {
+    unstable_rethrow(error); // redirect() harus diteruskan
+    console.error(`[${name}]`, error);
+    return { message: SERVER_ERROR };
+  }
+}
+
+export async function masukKaryawan(_prev: FormState, formData: FormData): Promise<FormState> {
+  return guarded("masuk-karyawan", () => masukKaryawanImpl(formData));
+}
+
+export async function aktivasi(_prev: FormState, formData: FormData): Promise<FormState> {
+  return guarded("aktivasi", () => aktivasiImpl(formData));
 }
 
 export async function keluarKaryawan() {

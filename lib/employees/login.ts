@@ -23,7 +23,10 @@ export async function signInWithPin(phone: string, pin: string): Promise<PinLogi
   const { data: lockedUntil, error: lockError } = await admin.rpc("employee_login_locked_until", {
     p_phone: phone,
   });
-  if (lockError) return { ok: false, message: "Ada kendala di server. Coba lagi sebentar lagi." };
+  if (lockError) {
+    console.error("[login-pin] cek kunci", lockError);
+    return { ok: false, message: "Ada kendala di server. Coba lagi sebentar lagi." };
+  }
   if (lockedUntil) return { ok: false, message: lockedMessage(lockedUntil) };
 
   const supabase = await createClient();
@@ -34,6 +37,7 @@ export async function signInWithPin(phone: string, pin: string): Promise<PinLogi
 
   if (error) {
     if (error.code !== "invalid_credentials") {
+      console.error("[login-pin] masuk", error);
       return {
         ok: false,
         message: "Ada kendala saat menghubungi server. Cek koneksi internet, lalu coba lagi.",
