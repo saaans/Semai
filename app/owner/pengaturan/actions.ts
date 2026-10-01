@@ -6,6 +6,7 @@ import { fieldErrors } from "@/lib/auth/schemas";
 import { requireOwner } from "@/lib/auth/session";
 import { LOGO_BUCKET, LOGO_TYPES, MAX_LOGO_BYTES } from "@/lib/company/logo";
 import { profilSchema } from "@/lib/company/schemas";
+import { lokasiSchema } from "@/lib/onboarding/schemas";
 import { createClient } from "@/lib/supabase/server";
 
 const SAVE_FAILED = "Gagal menyimpan. Periksa koneksi internet, lalu coba lagi.";
@@ -148,4 +149,42 @@ export async function simpanLogo(_prev: LogoState, formData: FormData): Promise<
 
   revalidateProfil();
   return { saved: "diganti" };
+}
+
+// -----------------------------------------------------------------------------
+// Lokasi absen: owner dan admin. Perubahan tercatat di audit_logs (trigger).
+// -----------------------------------------------------------------------------
+
+export type LokasiState = { errors?: Record<string, string>; message?: string; saved?: boolean };
+
+export async function simpanLokasiAbsen(_prev: LokasiState, formData: FormData): Promise<LokasiState> {
+  const owner = await requireOwner();
+
+  const parsed = lokasiSchema.safeParse({
+    name: text(formData, "name"),
+    latitude: text(formData, "latitude"),
+    longitude: text(formData, "longitude"),
+    radiusM: text(formData, "radiusM"),
+  });
+  if (!parsed.success) return { errors: fieldErrors(parsed.error) };
+
+  const locationId = text(formData, "locationId");
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("save_location", {
+    p_company_id: owner.companyId,
+    p_location_id: /^[0-9a-f-]{36}$/i.test(locationId) ? locationId : null,
+    p_name: parsed.data.name,
+    p_latitude: parsed.data.latitude,
+    p_longitude: parsed.data.longitude,
+    p_radius_m: parsed.data.radiusM,
+  });
+  if (error) {
+    if (error.code !== "P0001" && error.code !== "42501") console.error("[simpanLokasiAbsen]", error);
+    return { message: error.code === "P0001" || error.code === "42501" ? error.message : SAVE_FAILED };
+  }
+
+  revalidatePath("/owner/pengaturan");
+  revalidatePath("/owner");
+  revalidatePath("/app", "layout");
+  return { saved: true };
 }

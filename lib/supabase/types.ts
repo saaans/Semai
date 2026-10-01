@@ -1222,6 +1222,17 @@ export type Database = {
         };
         Returns: number;
       };
+      save_location: {
+        Args: {
+          p_company_id: string;
+          p_location_id: string | null;
+          p_name: string;
+          p_latitude: number;
+          p_longitude: number;
+          p_radius_m: number;
+        };
+        Returns: Database["public"]["Tables"]["locations"]["Row"][];
+      };
       set_company_logo: {
         Args: { p_company_id: string; p_logo_path: string | null };
         Returns: string | null;

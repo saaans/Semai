@@ -3,7 +3,7 @@
 import { startTransition, useActionState, type FormEvent } from "react";
 import type { FormState } from "../actions";
 
-type StepAction = (prev: FormState, formData: FormData) => Promise<FormState>;
+export type StepAction = (prev: FormState, formData: FormData) => Promise<FormState>;
 
 /**
  * Kirim form onboarding tanpa reset otomatis React 19, supaya isian

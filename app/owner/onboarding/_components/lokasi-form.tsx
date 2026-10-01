@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { simpanLokasi } from "../actions";
 import { LocationMap, type Point } from "./location-map";
-import { useStepForm } from "./use-step-form";
+import { useStepForm, type StepAction } from "./use-step-form";
 
 type GeoStatus =
   | { kind: "idle" }
@@ -27,10 +27,18 @@ function geoErrorMessage(error: GeolocationPositionError): string {
 
 export function LokasiForm({
   initial,
+  action = simpanLokasi,
+  submitLabel = "Lanjut",
+  savedText,
 }: {
   initial: { name: string; point: Point | null; radiusM: number };
+  /** Default: langkah onboarding. Pengaturan memakai action sendiri. */
+  action?: StepAction;
+  submitLabel?: string;
+  /** Pesan sukses kalau action mengembalikan saved. */
+  savedText?: string;
 }) {
-  const { state, pending, onSubmit } = useStepForm(simpanLokasi);
+  const { state, pending, onSubmit } = useStepForm(action);
   const errors = state.errors ?? {};
 
   const [point, setPoint] = useState<Point | null>(initial.point);
@@ -63,6 +71,7 @@ export function LokasiForm({
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
       {state.message && <FormAlert tone="error">{state.message}</FormAlert>}
+      {state.saved && savedText && <FormAlert tone="success">{savedText}</FormAlert>}
 
       <Input
         label="Nama lokasi"
@@ -132,7 +141,7 @@ export function LokasiForm({
       </div>
 
       <Button type="submit" fullWidth disabled={pending} aria-busy={pending}>
-        {pending ? "Menyimpan…" : "Lanjut"}
+        {pending ? "Menyimpan…" : submitLabel}
       </Button>
     </form>
   );

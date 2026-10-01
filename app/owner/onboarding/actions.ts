@@ -19,6 +19,8 @@ export type FormState = {
   errors?: Record<string, string>;
   /** Error umum di atas form. */
   message?: string;
+  /** Tersimpan tanpa pindah halaman (dipakai form yang sama di pengaturan). */
+  saved?: boolean;
 };
 
 const SAVE_FAILED = "Gagal menyimpan. Periksa koneksi internet, lalu coba lagi.";
