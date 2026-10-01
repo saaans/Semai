@@ -27,6 +27,8 @@ export type HistoryMonth = {
   nextMonth: string | null;
   days: HistoryDay[];
   summary: RecapSummary;
+  /** Jumlah hari di bulan ini yang fotonya sudah dihapus sesuai masa simpan paket. */
+  photosDeletedDays: number;
 };
 
 /** Riwayat absen satu bulan untuk karyawan yang sedang login (dibatasi RLS). */
@@ -63,7 +65,7 @@ export async function getHistoryMonth(
   const { data: rows, error } = await supabase
     .from("attendances")
     .select(
-      "work_date, status, clock_in_at, clock_out_at, late_minutes, early_leave_minutes, overtime_minutes, overtime_status, clock_in_offline, clock_out_offline, corrected_at, correction_reason",
+      "work_date, status, clock_in_at, clock_out_at, late_minutes, early_leave_minutes, overtime_minutes, overtime_status, clock_in_offline, clock_out_offline, corrected_at, correction_reason, photos_deleted_at",
     )
     .eq("employee_id", employeeId)
     .gte("work_date", first)
@@ -103,5 +105,7 @@ export async function getHistoryMonth(
     };
   });
 
-  return { month, prevMonth, nextMonth, days, summary: recap.summary };
+  const photosDeletedDays = rows.filter((r) => r.photos_deleted_at).length;
+
+  return { month, prevMonth, nextMonth, days, summary: recap.summary, photosDeletedDays };
 }

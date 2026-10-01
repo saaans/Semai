@@ -909,6 +909,81 @@ export type Database = {
           },
         ];
       };
+      photo_cleanup_runs: {
+        Row: {
+          attendances_cleared: number;
+          companies_count: number;
+          error: string | null;
+          failed_count: number;
+          finished_at: string | null;
+          id: number;
+          photos_deleted: number;
+          started_at: string;
+          status: string;
+        };
+        Insert: {
+          attendances_cleared?: number;
+          companies_count?: number;
+          error?: string | null;
+          failed_count?: number;
+          finished_at?: string | null;
+          id?: never;
+          photos_deleted?: number;
+          started_at?: string;
+          status?: string;
+        };
+        Update: {
+          attendances_cleared?: number;
+          companies_count?: number;
+          error?: string | null;
+          failed_count?: number;
+          finished_at?: string | null;
+          id?: never;
+          photos_deleted?: number;
+          started_at?: string;
+          status?: string;
+        };
+        Relationships: [];
+      };
+      photo_cleanup_run_companies: {
+        Row: {
+          attendances_cleared: number;
+          company_id: string;
+          failed_count: number;
+          photos_deleted: number;
+          run_id: number;
+        };
+        Insert: {
+          attendances_cleared?: number;
+          company_id: string;
+          failed_count?: number;
+          photos_deleted?: number;
+          run_id: number;
+        };
+        Update: {
+          attendances_cleared?: number;
+          company_id?: string;
+          failed_count?: number;
+          photos_deleted?: number;
+          run_id?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "photo_cleanup_run_companies_company_id_fkey";
+            columns: ["company_id"];
+            isOneToOne: false;
+            referencedRelation: "companies";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "photo_cleanup_run_companies_run_id_fkey";
+            columns: ["run_id"];
+            isOneToOne: false;
+            referencedRelation: "photo_cleanup_runs";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       plan_features: {
         Row: {
           enabled: boolean;
@@ -1229,6 +1304,41 @@ export type Database = {
         Returns: undefined;
       };
       company_level: { Args: { p_company_id: string }; Returns: string };
+      admin_photo_cleanup_runs: {
+        Args: { p_limit?: number };
+        Returns: {
+          id: number;
+          started_at: string;
+          finished_at: string | null;
+          status: string;
+          photos_deleted: number;
+          attendances_cleared: number;
+          companies_count: number;
+          failed_count: number;
+          error: string | null;
+        }[];
+      };
+      admin_photo_cleanup_run_detail: {
+        Args: { p_run_id: number };
+        Returns: {
+          company_id: string;
+          company_name: string;
+          photos_deleted: number;
+          attendances_cleared: number;
+          failed_count: number;
+        }[];
+      };
+      photo_retention_days: { Args: { p_company_id: string }; Returns: number | null };
+      photo_cleanup_candidates: {
+        Args: { p_limit: number; p_exclude?: string[] };
+        Returns: {
+          id: string;
+          company_id: string;
+          clock_in_photo_path: string | null;
+          clock_out_photo_path: string | null;
+        }[];
+      };
+      mark_photos_deleted: { Args: { p_ids: string[] }; Returns: string[] };
       add_employee: {
         Args: {
           p_company_id: string;

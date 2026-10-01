@@ -8,6 +8,7 @@ const LINKS = [
   { href: "/admin", label: "Ringkasan" },
   { href: "/admin/usaha", label: "Usaha" },
   { href: "/admin/tagihan", label: "Tagihan" },
+  { href: "/admin/foto", label: "Hapus foto" },
 ];
 
 export function AdminNav() {

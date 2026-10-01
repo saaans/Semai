@@ -151,3 +151,18 @@ export async function listPaymentProblems() {
   if (error) fail("paymentProblems", error);
   return data;
 }
+
+/** Riwayat job hapus foto absen (hanya angka, tanpa data pribadi). */
+export async function listPhotoCleanupRuns() {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("admin_photo_cleanup_runs", { p_limit: 30 });
+  if (error) fail("photoCleanupRuns", error);
+  return data;
+}
+
+export async function getPhotoCleanupRunDetail(runId: number) {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("admin_photo_cleanup_run_detail", { p_run_id: runId });
+  if (error) fail("photoCleanupRunDetail", error);
+  return data;
+}

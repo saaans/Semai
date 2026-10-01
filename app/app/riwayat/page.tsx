@@ -87,6 +87,12 @@ export default async function RiwayatPage({
         />
       </div>
 
+      {history.photosDeletedDays > 0 && (
+        <p className="text-xs text-ash">
+          Foto sudah dihapus sesuai masa simpan paket. Jam dan status absen tetap tersimpan.
+        </p>
+      )}
+
       {history.days.length === 0 ? (
         <p className="text-sm text-smoke">Belum ada catatan absen di bulan ini.</p>
       ) : (
