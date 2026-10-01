@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { CompanyLogo } from "@/components/company-logo";
 import { cn } from "@/lib/cn";
 import type { MenuItem } from "./menu";
 
@@ -74,10 +75,12 @@ function MenuLinks({ groups, pathname }: { groups: MenuItem[][]; pathname: strin
 export function OwnerNav({
   groups,
   companyName,
+  logoUrl,
   footer,
 }: {
   groups: MenuItem[][];
   companyName: string;
+  logoUrl: string | null;
   footer: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -104,12 +107,13 @@ export function OwnerNav({
   }, [open]);
 
   const brand = (
-    <div className="flex min-w-0 flex-col">
-      <Link href="/owner" className="font-display text-2xl tracking-tight">
-        semai
-      </Link>
-      <span className="truncate text-xs text-smoke">{companyName}</span>
-    </div>
+    <Link href="/owner" className="flex min-w-0 items-center gap-3">
+      <CompanyLogo url={logoUrl} name={companyName} />
+      <span className="flex min-w-0 flex-col">
+        <span className="truncate font-medium text-ink">{companyName}</span>
+        <span className="font-display text-sm tracking-tight text-smoke">semai</span>
+      </span>
+    </Link>
   );
 
   return (

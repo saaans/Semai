@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { LogoutButton } from "@/components/logout-button";
 import { requireOwner } from "@/lib/auth/session";
+import { companyLogoUrl } from "@/lib/company/logo";
 import { getCompanyPlan } from "@/lib/plans-server";
 import { createClient } from "@/lib/supabase/server";
 import { buildOwnerMenu } from "./_components/menu";
@@ -28,7 +29,7 @@ export default async function OwnerLayout({ children }: { children: React.ReactN
   const supabase = await createClient();
   const [plan, { data: company }] = await Promise.all([
     getCompanyPlan(owner.companyId),
-    supabase.from("companies").select("name").eq("id", owner.companyId).maybeSingle(),
+    supabase.from("companies").select("name, logo_path").eq("id", owner.companyId).maybeSingle(),
   ]);
 
   return (
@@ -36,6 +37,7 @@ export default async function OwnerLayout({ children }: { children: React.ReactN
       <OwnerNav
         groups={buildOwnerMenu(plan)}
         companyName={company?.name ?? "Usahamu"}
+        logoUrl={companyLogoUrl(company?.logo_path)}
         footer={
           <div className="flex items-center justify-between gap-2 px-1">
             <span className="min-w-0 truncate text-xs text-smoke">{owner.email ?? "Owner"}</span>
