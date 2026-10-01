@@ -5,6 +5,7 @@ import { FormAlert } from "@/app/(auth)/_components/form-alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { simpanLokasi } from "../actions";
+import { CariLokasi } from "./cari-lokasi";
 import { LocationMap, type Point } from "./location-map";
 import { useStepForm, type StepAction } from "./use-step-form";
 
@@ -95,6 +96,7 @@ export function LokasiForm({
             {geo.kind === "loading" ? "Membaca lokasi…" : "Pakai lokasi saya"}
           </Button>
         </div>
+        <CariLokasi onPick={pick} />
         <LocationMap point={point} radiusM={radiusM} onPick={pick} />
         <p className="text-sm text-ash" aria-live="polite">
           {geo.kind === "error" ? (
