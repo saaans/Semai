@@ -6,6 +6,7 @@ import { getPlans } from "@/lib/billing/server";
 import { hasSupabaseEnv } from "@/lib/env";
 import { formatRupiah } from "@/lib/format";
 import { BukuVsSemai } from "./_components/buku-vs-semai";
+import { TautanLegal } from "./_components/dokumen-legal";
 import { Faq } from "./_components/faq";
 import { FiturGrid } from "./_components/fitur-grid";
 import { HpAbsen } from "./_components/hp-absen";
@@ -251,12 +252,15 @@ export default async function LandingPage() {
 
       <footer className="flex flex-col gap-3 border-t border-stone py-8 text-sm text-ash sm:flex-row sm:items-center sm:justify-between">
         <p>© 2026 Semai</p>
-        <p>
-          Karyawan?{" "}
-          <Link href="/app/masuk" className="text-graphite underline underline-offset-4 hover:text-ink">
-            Masuk untuk absen
-          </Link>
-        </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+          <TautanLegal />
+          <p>
+            Karyawan?{" "}
+            <Link href="/app/masuk" className="text-graphite underline underline-offset-4 hover:text-ink">
+              Masuk untuk absen
+            </Link>
+          </p>
+        </div>
       </footer>
     </div>
     </div>

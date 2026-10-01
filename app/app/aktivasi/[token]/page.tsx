@@ -50,6 +50,18 @@ export default async function AktivasiPage({ params }: { params: Promise<{ token
           Data salah? Jangan lanjutkan, hubungi pemilik usaha untuk memperbaikinya.
         </p>
         <AktivasiForm token={token} needsExistingPin={invitation.needs_existing_pin} />
+        <p className="text-xs leading-relaxed text-smoke">
+          Dengan mengaktifkan akun, kamu setuju foto selfie dan lokasimu dicatat setiap kali absen.
+          Baca{" "}
+          <a href="/privasi" target="_blank" rel="noopener" className="text-ink underline underline-offset-4">
+            Kebijakan Privasi
+          </a>{" "}
+          dan{" "}
+          <a href="/syarat" target="_blank" rel="noopener" className="text-ink underline underline-offset-4">
+            Syarat &amp; Ketentuan
+          </a>
+          .
+        </p>
       </Card>
     </EmployeeShell>
   );
