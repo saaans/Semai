@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { LogoutButton } from "@/components/logout-button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = { title: "Super admin" };
@@ -10,7 +11,10 @@ export default function AdminPage() {
     <div className="mx-auto flex min-h-dvh max-w-6xl flex-col gap-8 px-5 py-6 sm:px-8">
       <header className="flex items-center justify-between border-b border-stone pb-4">
         <span className="font-display text-2xl tracking-tight">semai</span>
-        <span className="text-sm text-smoke">Super admin</span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-smoke">Super admin</span>
+          <LogoutButton />
+        </div>
       </header>
       <main className="flex flex-col gap-6">
         <h1 className="text-3xl sm:text-4xl">Ringkasan bisnis</h1>
@@ -25,7 +29,7 @@ export default function AdminPage() {
         <Card>
           <CardTitle>Khusus tim Semai</CardTitle>
           <CardDescription>
-            Akses dibatasi flag is_platform_admin, dibuat di langkah registrasi.
+            Halaman ini hanya bisa dibuka akun dengan flag is_platform_admin.
           </CardDescription>
         </Card>
       </main>

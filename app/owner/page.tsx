@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Tag } from "@/components/ui/tag";
+import { requireOwner } from "@/lib/auth/session";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -11,7 +13,10 @@ const summary = [
   { label: "Belum absen", value: "–" },
 ];
 
-export default function OwnerPage() {
+export default async function OwnerPage() {
+  const owner = await requireOwner();
+  if (!owner.onboardingCompleted) redirect("/owner/onboarding");
+
   return (
     <>
       <div className="flex flex-col gap-2">

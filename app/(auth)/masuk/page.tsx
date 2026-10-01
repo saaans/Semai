@@ -1,27 +1,36 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { callbackErrors } from "@/lib/auth/errors";
+import { safeNextPath } from "@/lib/auth/session";
+import { FormAlert, OrDivider } from "../_components/form-alert";
+import { GoogleButton } from "../_components/google-button";
+import { MasukForm } from "./masuk-form";
 
 export const metadata: Metadata = { title: "Masuk" };
 
-export default function MasukPage() {
+export default async function MasukPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string; error?: string }>;
+}) {
+  const params = await searchParams;
+  const next = safeNextPath(params.next);
+  const error = params.error ? callbackErrors[params.error] : undefined;
+
   return (
     <>
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl">Masuk ke Semai</h1>
-        <p className="text-smoke">Untuk pemilik usaha. Form ini belum tersambung.</p>
+        <p className="text-smoke">
+          Untuk pemilik usaha. Karyawan masuk lewat aplikasi Semai dengan nomor HP dan PIN.
+        </p>
       </div>
+      {error && <FormAlert tone="error">{error}</FormAlert>}
       <Card className="flex flex-col gap-4">
-        <Button variant="secondary" arrow={false} fullWidth disabled>
-          Masuk dengan Google
-        </Button>
-        <Input label="Email" type="email" autoComplete="email" disabled />
-        <Input label="Password" type="password" autoComplete="current-password" disabled />
-        <Button fullWidth disabled>
-          Masuk
-        </Button>
+        <GoogleButton label="Masuk dengan Google" next={next} />
+        <OrDivider />
+        <MasukForm next={next} />
       </Card>
       <p className="text-sm text-smoke">
         Belum punya akun?{" "}
