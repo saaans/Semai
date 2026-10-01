@@ -31,7 +31,8 @@ export default async function OwnerLayout({ children }: { children: React.ReactN
   const supabase = await createClient();
   const [plan, overview, { data: company }] = await Promise.all([
     getCompanyPlan(owner.companyId),
-    getBillingOverview(owner.companyId),
+    // Banner tagihan tidak boleh membuat seluruh area owner gagal dimuat.
+    getBillingOverview(owner.companyId).catch(() => null),
     supabase.from("companies").select("name, logo_path, timezone").eq("id", owner.companyId).maybeSingle(),
   ]);
 
@@ -49,7 +50,7 @@ export default async function OwnerLayout({ children }: { children: React.ReactN
         }
       />
       <main className="mx-auto flex w-full max-w-5xl min-w-0 flex-1 flex-col gap-6 px-5 py-6 sm:px-8 lg:py-10">
-        <BillingBanner overview={overview} timezone={company?.timezone ?? "Asia/Jakarta"} />
+        {overview && <BillingBanner overview={overview} timezone={company?.timezone ?? "Asia/Jakarta"} />}
         {children}
       </main>
     </div>

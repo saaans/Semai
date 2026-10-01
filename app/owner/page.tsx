@@ -31,7 +31,7 @@ export default async function OwnerPage() {
     getTodayBoard(owner.companyId),
     getPendingPaidPlan(owner.companyId),
     getRemoteStatus(owner.companyId),
-    getBillingOverview(owner.companyId),
+    getBillingOverview(owner.companyId).catch(() => null),
     cookies(),
   ]);
   const quotaDismissed = cookieStore.get(QUOTA_DISMISS_COOKIE)?.value === "1";
@@ -106,7 +106,7 @@ export default async function OwnerPage() {
         </Card>
       )}
 
-      {!quotaDismissed && <QuotaNotice overview={overview} timezone={tz} dismiss={<TutupKuotaButton />} />}
+      {overview && !quotaDismissed && <QuotaNotice overview={overview} timezone={tz} dismiss={<TutupKuotaButton />} />}
 
       {pendingPlan && (
         <Card>
