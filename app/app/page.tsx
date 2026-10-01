@@ -1,33 +1,29 @@
+import Link from "next/link";
 import type { Metadata } from "next";
-import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
-import { Tag } from "@/components/ui/tag";
+import { getAbsenHome } from "@/lib/attendance/today";
 import { requireEmployee } from "@/lib/auth/session";
-import { keluarKaryawan } from "./actions";
+import { cn } from "@/lib/cn";
+import { formatClock, formatDate, timezoneLabel } from "@/lib/format";
+import { AbsenCard } from "./_components/absen-card";
+import { EmployeeNav } from "./_components/employee-nav";
 import { EmployeeShell } from "./_components/employee-shell";
+import { InstallPrompt } from "./_components/install-prompt";
 
 export const metadata: Metadata = { title: "Absen" };
 
-function LogoutKaryawan() {
-  return (
-    <form action={keluarKaryawan}>
-      <button
-        type="submit"
-        className="min-h-11 rounded-button px-2 text-sm text-graphite underline-offset-4 hover:text-ink hover:underline"
-      >
-        Keluar
-      </button>
-    </form>
-  );
-}
-
-export default async function EmployeeAppPage() {
-  const { memberships } = await requireEmployee();
-  const current = memberships[0];
+export default async function EmployeeAppPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ usaha?: string }>;
+}) {
+  const { userId, memberships } = await requireEmployee();
+  const { usaha } = await searchParams;
+  const current = memberships.find((m) => m.companyId === usaha) ?? memberships[0];
 
   if (!current) {
     return (
-      <EmployeeShell header={<LogoutKaryawan />}>
+      <EmployeeShell header={<EmployeeNav />}>
         <Card>
           <CardTitle>Akunmu sedang nonaktif</CardTitle>
           <CardDescription>
@@ -38,29 +34,56 @@ export default async function EmployeeAppPage() {
     );
   }
 
+  const home = await getAbsenHome(current.employeeId, current.timezone);
+  const tz = timezoneLabel(current.timezone);
+
   return (
-    <EmployeeShell header={<LogoutKaryawan />}>
-      <div className="flex flex-col gap-1">
-        <p className="text-sm text-smoke">{current.companyName}</p>
-        <h1 className="text-3xl">Halo, {current.fullName.split(/\s+/)[0]}</h1>
-      </div>
-      <Card className="flex flex-col gap-4">
-        <Tag className="self-start">Belum absen</Tag>
-        <Button fullWidth disabled>
-          Absen masuk
-        </Button>
-        <p className="text-sm text-ash">Absen selfie + GPS dibuat di langkah berikutnya.</p>
-      </Card>
+    <EmployeeShell header={<EmployeeNav companyId={current.companyId} />}>
       {memberships.length > 1 && (
-        <p className="text-sm text-smoke">
-          Kamu juga terdaftar di{" "}
-          {memberships
-            .slice(1)
-            .map((m) => m.companyName)
-            .join(", ")}
-          .
-        </p>
+        <nav aria-label="Pilih usaha" className="-mx-1 flex gap-2 overflow-x-auto px-1">
+          {memberships.map((m) => (
+            <Link
+              key={m.companyId}
+              href={`/app?usaha=${m.companyId}`}
+              aria-current={m.companyId === current.companyId ? "page" : undefined}
+              className={cn(
+                "flex min-h-11 shrink-0 items-center rounded-full border px-4 text-sm",
+                m.companyId === current.companyId
+                  ? "border-ink bg-ink text-canvas"
+                  : "border-stone text-graphite hover:border-graphite",
+              )}
+            >
+              {m.companyName}
+            </Link>
+          ))}
+        </nav>
       )}
+
+      <div className="flex flex-col gap-1">
+        <p className="text-sm text-smoke">
+          {current.companyName} · {formatDate(new Date(), current.timezone)}
+        </p>
+        <h1 className="text-3xl">Halo, {current.fullName.split(/\s+/)[0]}</h1>
+        {home.schedule && (
+          <p className="text-sm text-smoke">
+            Jadwal {home.schedule.name}: {formatClock(home.schedule.start_time)}–
+            {formatClock(home.schedule.end_time)} {tz}
+          </p>
+        )}
+      </div>
+
+      <AbsenCard
+        key={current.companyId}
+        userId={userId}
+        companyId={current.companyId}
+        timezone={current.timezone}
+        mode={home.mode}
+        location={home.location}
+        today={home.today}
+        isWorkDay={home.isWorkDay}
+      />
+
+      <InstallPrompt />
     </EmployeeShell>
   );
 }
