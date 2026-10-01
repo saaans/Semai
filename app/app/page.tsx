@@ -74,6 +74,19 @@ export default async function EmployeeAppPage({
             {formatClock(home.schedule.end_time)} {tz}
           </p>
         )}
+        {home.remote.active && (
+          <p className="text-sm text-smoke">
+            Kamu terdaftar kerja remote. Absen bisa dari mana saja.
+            {home.remote.graceUntil &&
+              ` Berlaku sampai ${formatDate(home.remote.graceUntil, current.timezone)}, setelah itu absen wajib di lokasi usaha.`}
+          </p>
+        )}
+        {home.remote.ended && (
+          <p className="text-sm text-danger">
+            Absen remote sudah tidak berlaku. Sekarang absen wajib di lokasi usaha. Tanya pemilik
+            usaha kalau ini keliru.
+          </p>
+        )}
       </div>
 
       <AbsenCard
@@ -82,6 +95,7 @@ export default async function EmployeeAppPage({
         companyId={current.companyId}
         timezone={current.timezone}
         mode={home.mode}
+        remote={home.remote.active}
         location={home.location}
         today={home.today}
         isWorkDay={home.isWorkDay}

@@ -43,6 +43,10 @@ export const FEATURE_INFO: Partial<Record<FeatureKey, { label: string; benefit: 
     label: "THR",
     benefit: "Hitung THR proporsional sesuai masa kerja setiap karyawan.",
   },
+  absen_remote: {
+    label: "Absen remote",
+    benefit: "Karyawan yang kerja dari luar kantor bisa absen dari mana saja, tetap dengan selfie dan lokasi tercatat.",
+  },
   admin_tambahan: {
     label: "Admin tambahan",
     benefit: "Tambah admin atau supervisor untuk mengelola absen, tanpa akses nominal gaji.",

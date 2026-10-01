@@ -23,6 +23,12 @@ export function koreksiInitial(attendance: OwnerAttendance | null, timezone: str
   };
 }
 
+/** 240 → "240 m", 44478 → "44,5 km". */
+function formatDistance(meters: number) {
+  if (meters < 1000) return `${meters} m`;
+  return `${(meters / 1000).toLocaleString("id-ID", { maximumFractionDigits: 1 })} km`;
+}
+
 function overtimeText(attendance: OwnerAttendance) {
   const status =
     attendance.overtimeStatus === "disetujui"
@@ -39,11 +45,14 @@ export function AbsenInfo({
   timezone,
   name,
   radiusM,
+  remote,
 }: {
   attendance: OwnerAttendance;
   timezone: string;
   name: string;
   radiusM?: number | null;
+  /** Karyawan remote: jarak hanya info, bukan batas. */
+  remote?: boolean;
 }) {
   if (attendance.status !== "hadir") {
     return attendance.correctionReason ? (
@@ -57,8 +66,11 @@ export function AbsenInfo({
   if (attendance.overtimeMinutes > 0) notes.push(overtimeText(attendance));
   if (attendance.offline) notes.push("Dikirim saat offline");
 
-  const distance = (meters: number | null) =>
-    meters === null ? null : `${meters} m${radiusM ? ` dari lokasi (radius ${radiusM} m)` : " dari lokasi"}`;
+  const distance = (meters: number | null, at: string | null) => {
+    if (!at) return null;
+    if (remote) return meters === null ? "Absen remote" : `Absen remote · ${formatDistance(meters)} dari lokasi`;
+    return meters === null ? null : `${formatDistance(meters)}${radiusM ? ` dari lokasi (radius ${radiusM} m)` : " dari lokasi"}`;
+  };
 
   return (
     <div className="flex flex-col gap-2">
@@ -79,15 +91,15 @@ export function AbsenInfo({
           <dt className="text-smoke">Masuk</dt>
           <dd className="min-w-0">
             <span className="font-mono text-ink">{attendance.clockInAt ? formatTime(attendance.clockInAt, timezone) : "–"}</span>
-            {distance(attendance.clockInDistanceM) && (
-              <span className="block truncate text-xs text-smoke">{distance(attendance.clockInDistanceM)}</span>
+            {distance(attendance.clockInDistanceM, attendance.clockInAt) && (
+              <span className="block truncate text-xs text-smoke">{distance(attendance.clockInDistanceM, attendance.clockInAt)}</span>
             )}
           </dd>
           <dt className="text-smoke">Pulang</dt>
           <dd className="min-w-0">
             <span className="font-mono text-ink">{attendance.clockOutAt ? formatTime(attendance.clockOutAt, timezone) : "–"}</span>
-            {distance(attendance.clockOutDistanceM) && (
-              <span className="block truncate text-xs text-smoke">{distance(attendance.clockOutDistanceM)}</span>
+            {distance(attendance.clockOutDistanceM, attendance.clockOutAt) && (
+              <span className="block truncate text-xs text-smoke">{distance(attendance.clockOutDistanceM, attendance.clockOutAt)}</span>
             )}
           </dd>
         </dl>
