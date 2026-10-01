@@ -6,6 +6,7 @@ import { companyLogoUrl } from "@/lib/company/logo";
 import { getCompanyPlan } from "@/lib/plans-server";
 import { createClient } from "@/lib/supabase/server";
 import { BillingBanner } from "./_components/billing-banner";
+import { FeedbackButton } from "./_components/feedback-button";
 import { buildOwnerMenu } from "./_components/menu";
 import { OwnerNav, type OwnerAccount } from "./_components/owner-nav";
 
@@ -52,10 +53,11 @@ export default async function OwnerLayout({ children }: { children: React.ReactN
         account={account}
         logout={<LogoutButton variant="menu" />}
       />
-      <main className="mx-auto flex w-full max-w-5xl min-w-0 flex-1 flex-col gap-6 px-5 py-6 sm:px-8 lg:py-10">
+      <main className="mx-auto flex w-full max-w-5xl min-w-0 flex-1 flex-col gap-6 px-5 pt-6 pb-24 sm:px-8 lg:pt-10">
         {overview && <BillingBanner overview={overview} timezone={company?.timezone ?? "Asia/Jakarta"} />}
         {children}
       </main>
+      <FeedbackButton />
     </div>
   );
 }

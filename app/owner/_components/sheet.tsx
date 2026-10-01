@@ -17,6 +17,7 @@ export function Sheet({
   title,
   subtitle,
   variant = "button",
+  triggerClassName,
   savedText,
   children,
 }: {
@@ -24,6 +25,8 @@ export function Sheet({
   title: string;
   subtitle?: string;
   variant?: keyof typeof triggerClass;
+  /** Ganti gaya tombol pembuka, contoh tombol mengambang. */
+  triggerClassName?: string;
   /** Teks singkat setelah berhasil, contoh "Tersimpan". */
   savedText?: string;
   children: (done: () => void) => ReactNode;
@@ -54,7 +57,7 @@ export function Sheet({
 
   return (
     <>
-      <button type="button" onClick={open} className={triggerClass[variant]}>
+      <button type="button" onClick={open} className={triggerClassName ?? triggerClass[variant]}>
         {label}
       </button>
       {saved && savedText && (

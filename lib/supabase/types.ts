@@ -469,6 +469,53 @@ export type Database = {
           },
         ];
       };
+      feedbacks: {
+        Row: {
+          category: string;
+          company_id: string;
+          created_at: string;
+          id: string;
+          message: string;
+          page_path: string | null;
+          priority: string | null;
+          status: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          category: string;
+          company_id: string;
+          created_at?: string;
+          id?: string;
+          message: string;
+          page_path?: string | null;
+          priority?: string | null;
+          status?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Update: {
+          category?: string;
+          company_id?: string;
+          created_at?: string;
+          id?: string;
+          message?: string;
+          page_path?: string | null;
+          priority?: string | null;
+          status?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "feedbacks_company_id_fkey";
+            columns: ["company_id"];
+            isOneToOne: false;
+            referencedRelation: "companies";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       invoices: {
         Row: {
           amount: number;
@@ -1099,6 +1146,22 @@ export type Database = {
     };
     Functions: {
       company_level: { Args: { p_company_id: string }; Returns: string };
+      admin_list_feedbacks: {
+        Args: { p_status?: string | null };
+        Returns: {
+          id: string;
+          created_at: string;
+          category: string;
+          message: string;
+          page_path: string | null;
+          status: string;
+          priority: string | null;
+          sender_name: string | null;
+          sender_email: string | null;
+          company_id: string;
+          company_name: string | null;
+        }[];
+      };
       add_employee: {
         Args: {
           p_company_id: string;

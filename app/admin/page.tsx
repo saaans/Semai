@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { LogoutButton } from "@/components/logout-button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 
@@ -26,6 +27,12 @@ export default function AdminPage() {
             </Card>
           ))}
         </div>
+        <Link href="/admin/feedback" className="rounded-card focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink">
+          <Card className="transition-colors hover:bg-stone">
+            <CardTitle>Masukan dari owner</CardTitle>
+            <CardDescription>Baca masukan, lalu atur status dan prioritasnya.</CardDescription>
+          </Card>
+        </Link>
         <Card>
           <CardTitle>Khusus tim Semai</CardTitle>
           <CardDescription>
