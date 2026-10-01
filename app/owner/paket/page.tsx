@@ -153,49 +153,40 @@ export default async function PaketPage({
           <CycleToggle cycle={cycle} />
         </div>
 
-        {benih && (
-          <Card className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <div className="flex items-center gap-2">
-                <CardTitle>Benih</CardTitle>
-                {overview.level === "benih" && <Tag tone="ink">Paket kamu</Tag>}
-              </div>
-              <CardDescription>
-                Gratis · {rangeLabel(benih)}. Absen selfie + GPS, rekap, dan gajian dasar dengan slip bertanda
-                Semai.
-              </CardDescription>
-            </div>
-            {isOwner && overview.level !== "benih" && (
-              <div className="shrink-0">
-                <TurunBenihButton planName={overview.planName} warning={downgradeWarning} />
-              </div>
-            )}
-          </Card>
-        )}
-
-        <ul className="flex flex-col gap-3">
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {benih && (
+            <li className="flex">
+              <PlanCard
+                name="Benih"
+                range={rangeLabel(benih)}
+                note="Absen, rekap, dan gajian dasar"
+                current={overview.level === "benih" ? "Paket kamu" : null}
+                price={<p className="font-display text-3xl">Gratis</p>}
+                action={
+                  isOwner && overview.level !== "benih" ? (
+                    <TurunBenihButton planName={overview.planName} warning={downgradeWarning} />
+                  ) : null
+                }
+              />
+            </li>
+          )}
           {paid.map(({ plan, label, range, fits }) => {
             const price = planPrice(plan, cycle);
             const current = overview.planCode === plan.code;
             return (
-              <li key={plan.code}>
-                <Card className={cn("flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between", !fits && "opacity-60")}>
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <CardTitle>{label}</CardTitle>
-                      {current && <Tag tone="ink">{overview.status === "trialing" ? "Trial kamu" : "Paket kamu"}</Tag>}
-                    </div>
-                    <CardDescription>
-                      {range} · semua fitur
-                      {!fits && `. Karyawanmu sekarang ${overview.employeesUsed}, melebihi batas paket ini.`}
-                    </CardDescription>
-                  </div>
-                  <div className="flex shrink-0 flex-col gap-2 sm:items-end">
-                    {price === null ? (
-                      <p className="text-sm text-graphite sm:text-right">Harga khusus. Hubungi tim Semai lewat email akunmu.</p>
+              <li key={plan.code} className="flex">
+                <PlanCard
+                  name={label}
+                  range={range}
+                  note={fits ? "Semua fitur" : `Karyawanmu ${overview.employeesUsed}, melebihi batas paket ini`}
+                  dimmed={!fits}
+                  current={current ? (overview.status === "trialing" ? "Trial kamu" : "Paket kamu") : null}
+                  price={
+                    price === null ? (
+                      <p className="text-sm text-graphite">Harga khusus. Hubungi tim Semai lewat email akunmu.</p>
                     ) : (
-                      <div className="sm:text-right">
-                        <p className="font-display text-2xl">
+                      <div>
+                        <p className="font-display text-3xl">
                           {formatRupiah(price)}
                           <span className="font-sans text-sm text-smoke">/{cycle === "tahunan" ? "tahun" : "bulan"}</span>
                         </p>
@@ -203,14 +194,16 @@ export default async function PaketPage({
                           <p className="text-xs text-smoke">Hemat {formatRupiah(yearlySaving(plan))}</p>
                         )}
                       </div>
-                    )}
-                    {price !== null && fits && isOwner && (
-                      <Button variant="secondary" arrow={false} disabled>
+                    )
+                  }
+                  action={
+                    price !== null && fits && isOwner ? (
+                      <Button variant="secondary" arrow={false} fullWidth disabled>
                         Bayar · segera tersedia
                       </Button>
-                    )}
-                  </div>
-                </Card>
+                    ) : null
+                  }
+                />
               </li>
             );
           })}
@@ -264,5 +257,39 @@ function CycleToggle({ cycle }: { cycle: BillingCycle }) {
         </Link>
       ))}
     </div>
+  );
+}
+
+/** Satu kartu paket di grid "Pilih paket". */
+function PlanCard({
+  name,
+  range,
+  note,
+  current,
+  price,
+  action,
+  dimmed = false,
+}: {
+  name: string;
+  range: string;
+  note: string;
+  current: string | null;
+  price: React.ReactNode;
+  action: React.ReactNode;
+  dimmed?: boolean;
+}) {
+  return (
+    <Card className={cn("flex w-full flex-col gap-4", current && "outline-2 outline-ink", dimmed && "opacity-60")}>
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <CardTitle>{name}</CardTitle>
+          <p className="text-sm text-smoke">{range}</p>
+        </div>
+        {current && <Tag tone="ink">{current}</Tag>}
+      </div>
+      {price}
+      <p className="text-sm text-graphite">{note}</p>
+      {action && <div className="mt-auto pt-2">{action}</div>}
+    </Card>
   );
 }
