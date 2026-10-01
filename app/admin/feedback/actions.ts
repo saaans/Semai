@@ -1,12 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { unstable_rethrow } from "next/navigation";
 import { fieldErrors } from "@/lib/auth/schemas";
 import { requirePlatformAdmin } from "@/lib/auth/session";
 import { feedbackStatusSchema } from "@/lib/feedback/schemas";
 import { createClient } from "@/lib/supabase/server";
 
 export type FeedbackStatusState = { message?: string; saved?: boolean };
+
+const SAVE_FAILED = "Gagal menyimpan. Muat ulang halaman, lalu coba lagi.";
 
 function text(formData: FormData, key: string): string {
   const value = formData.get(key);
@@ -17,6 +20,16 @@ export async function ubahStatusMasukan(
   _prev: FeedbackStatusState,
   formData: FormData,
 ): Promise<FeedbackStatusState> {
+  try {
+    return await simpanStatus(formData);
+  } catch (error) {
+    unstable_rethrow(error);
+    console.error("[ubahStatusMasukan] gagal", error);
+    return { message: SAVE_FAILED };
+  }
+}
+
+async function simpanStatus(formData: FormData): Promise<FeedbackStatusState> {
   await requirePlatformAdmin();
   const parsed = feedbackStatusSchema.safeParse({
     id: text(formData, "id"),
@@ -33,7 +46,7 @@ export async function ubahStatusMasukan(
     .select("id");
   if (error || !data?.length) {
     if (error) console.error("[ubahStatusMasukan]", error);
-    return { message: "Gagal menyimpan. Muat ulang halaman, lalu coba lagi." };
+    return { message: SAVE_FAILED };
   }
 
   revalidatePath("/admin/feedback");
