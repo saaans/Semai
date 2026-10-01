@@ -15,6 +15,9 @@ import {
   yearlySaving,
   type BillingCycle,
 } from "@/lib/billing/catalog";
+import { getMidtransConfig } from "@/lib/billing/midtrans";
+import { checkoutOption, type CurrentPaidPlan } from "@/lib/billing/payment";
+import { processMidtransOrder } from "@/lib/billing/process";
 import { getBillingOverview, getPlans, type BillingOverview } from "@/lib/billing/server";
 import { daysLeft, quotaStatus } from "@/lib/billing/state";
 import { cn } from "@/lib/cn";
@@ -23,7 +26,8 @@ import { FEATURE_KEYS } from "@/lib/plans";
 import { getCompanyPlan } from "@/lib/plans-server";
 import { createClient } from "@/lib/supabase/server";
 import { FEATURE_INFO } from "../_components/menu";
-import { TrialButton, TurunBenihButton } from "./paket-forms";
+import { BayarButton, TrialButton, TurunBenihButton } from "./paket-forms";
+import { RefreshSoon } from "./refresh-soon";
 
 export const metadata: Metadata = { title: "Paket" };
 
@@ -57,7 +61,7 @@ function statusLine(overview: BillingOverview, timezone: string): string {
 export default async function PaketPage({
   searchParams,
 }: {
-  searchParams: Promise<{ siklus?: string; trial?: string; benih?: string }>;
+  searchParams: Promise<{ siklus?: string; trial?: string; benih?: string; tagihan?: string }>;
 }) {
   const owner = await requireOwner();
   if (!owner.onboardingCompleted) redirect("/owner/onboarding");
@@ -66,11 +70,41 @@ export default async function PaketPage({
   const cycle: BillingCycle = isBillingCycle(params.siklus) ? params.siklus : "bulanan";
 
   const supabase = await createClient();
-  const [overview, plans, companyPlan, { data: company }] = await Promise.all([
+
+  // Kembali dari halaman bayar: cek status langsung ke Midtrans, jaga-jaga
+  // kalau webhook telat atau gagal. Hanya tagihan usaha ini (RLS owner).
+  const config = getMidtransConfig();
+  if (params.tagihan && owner.role === "owner" && config) {
+    const { data: returning } = await supabase
+      .from("invoices")
+      .select("number, status")
+      .eq("company_id", owner.companyId)
+      .eq("number", params.tagihan)
+      .maybeSingle();
+    if (returning?.status === "pending") {
+      const { result } = await processMidtransOrder(config, returning.number, {
+        payload: { sumber: "halaman_paket" },
+        signatureValid: true,
+        source: "cek_status",
+      });
+      // Layout sudah membaca paket lama di request ini: muat ulang supaya
+      // banner, status, dan kartu paket memakai data baru.
+      if (result === "lunas") redirect(`/owner/paket?tagihan=${encodeURIComponent(returning.number)}`);
+    }
+  }
+
+  const [overview, plans, companyPlan, { data: company }, { data: invoices }] = await Promise.all([
     getBillingOverview(owner.companyId),
     getPlans(),
     getCompanyPlan(owner.companyId),
     supabase.from("companies").select("timezone").eq("id", owner.companyId).maybeSingle(),
+    // Tagihan hanya bisa dibaca owner (RLS); admin melihat daftar kosong.
+    supabase
+      .from("invoices")
+      .select("id, number, amount, credit_amount, status, plan_code, billing_cycle, kind, checkout_url, expires_at, paid_at, period_end, created_at")
+      .eq("company_id", owner.companyId)
+      .order("created_at", { ascending: false })
+      .limit(12),
   ]);
   const tz = company?.timezone ?? "Asia/Jakarta";
   const isOwner = owner.role === "owner";
@@ -79,6 +113,21 @@ export default async function PaketPage({
   const benih = plans.find((p) => p.level === "benih");
   const paid = paidPlans(plans, overview.employeesUsed);
   const canTrial = isOwner && !overview.trialUsed && overview.level === "benih";
+
+  const planName = (code: string | null) => plans.find((p) => p.code === code)?.name ?? code ?? "Paket";
+  const invoiceList = (invoices ?? []).filter((i) => i.status !== "void");
+  const now = new Date();
+  const pendingInvoice = invoiceList.find(
+    (i) => i.status === "pending" && i.checkout_url && i.expires_at && new Date(i.expires_at) > now,
+  );
+  const returnedInvoice = params.tagihan ? invoiceList.find((i) => i.number === params.tagihan) : undefined;
+
+  // Paket berbayar yang sedang berjalan, untuk menentukan Bayar / Upgrade / Perpanjang.
+  const currentPlan = plans.find((p) => p.code === overview.planCode);
+  const currentPaid: CurrentPaidPlan | null =
+    overview.level === "benih" || !overview.status
+      ? null
+      : { status: overview.status, priceMonthly: currentPlan?.price_monthly ?? null, periodEnd: overview.currentPeriodEnd };
 
   const benihMax = benih?.max_employees ?? null;
   const overBenih = benihMax !== null && overview.employeesUsed > benihMax ? overview.employeesUsed - benihMax : 0;
@@ -109,6 +158,38 @@ export default async function PaketPage({
       )}
       {params.benih === "1" && overview.level === "benih" && (
         <FormAlert tone="success">Usahamu sekarang memakai paket Benih.</FormAlert>
+      )}
+      {returnedInvoice && (
+        <ReturnNotice
+          status={returnedInvoice.status}
+          planName={planName(returnedInvoice.plan_code)}
+          periodEnd={returnedInvoice.period_end}
+          timezone={tz}
+        />
+      )}
+
+      {pendingInvoice && returnedInvoice?.id !== pendingInvoice.id && (
+        <Card className="flex flex-col gap-3 border border-stone bg-canvas sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <Tag tone="outline">Menunggu pembayaran</Tag>
+            <CardTitle className="mt-3">
+              {formatRupiah(pendingInvoice.amount)} · {planName(pendingInvoice.plan_code)}{" "}
+              {pendingInvoice.billing_cycle === "tahunan" ? "tahunan" : "bulanan"}
+            </CardTitle>
+            <CardDescription>
+              Bayar lewat virtual account bank atau QRIS sebelum{" "}
+              {pendingInvoice.expires_at ? formatDateTime(pendingInvoice.expires_at, tz) : "tagihan kedaluwarsa"}.
+            </CardDescription>
+          </div>
+          {pendingInvoice.checkout_url && (
+            <a
+              href={pendingInvoice.checkout_url}
+              className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-button border border-stone px-4 text-sm font-medium text-ink hover:border-graphite hover:bg-taupe"
+            >
+              Lanjutkan pembayaran
+            </a>
+          )}
+        </Card>
       )}
 
       <Card>
@@ -200,10 +281,15 @@ export default async function PaketPage({
                     )
                   }
                   action={
-                    price !== null && fits && isOwner ? (
-                      <Button variant="secondary" arrow={false} fullWidth disabled>
-                        Bayar · segera tersedia
-                      </Button>
+                    price !== null && plan.price_monthly !== null && fits && isOwner ? (
+                      <PlanAction
+                        planCode={plan.code}
+                        cycle={cycle}
+                        price={price}
+                        option={checkoutOption(currentPaid, plan.price_monthly, now)}
+                        isCurrent={current && currentPaid !== null && currentPaid.status !== "trialing"}
+                        timezone={tz}
+                      />
                     ) : null
                   }
                 />
@@ -211,7 +297,10 @@ export default async function PaketPage({
             );
           })}
         </ul>
-        <p className="text-sm text-ash">Pembayaran online lewat virtual account bank dan QRIS segera tersedia.</p>
+        <p className="text-sm text-ash">
+          Bayar lewat virtual account bank atau QRIS. Tagihan berlaku 24 jam. Upgrade di tengah periode memotong
+          sisa nilai paket lama; perpanjangan bisa dibayar mulai 7 hari sebelum paket berakhir.
+        </p>
       </section>
 
       <Card>
@@ -219,6 +308,33 @@ export default async function PaketPage({
         <CardDescription>Semua fitur Benih, ditambah:</CardDescription>
         <FeatureList items={paidFeatures} />
       </Card>
+
+      {invoiceList.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-2xl">Riwayat tagihan</h2>
+          <ul className="flex flex-col divide-y divide-stone overflow-hidden rounded-card bg-taupe">
+            {invoiceList.map((invoice) => (
+              <li key={invoice.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
+                <div className="min-w-0">
+                  <p className="font-medium text-ink">
+                    {planName(invoice.plan_code)} · {invoice.billing_cycle === "tahunan" ? "tahunan" : "bulanan"}
+                    {invoice.kind === "upgrade" && " · upgrade"}
+                    {invoice.kind === "perpanjang" && " · perpanjang"}
+                  </p>
+                  <p className="text-sm text-smoke">
+                    <span className="font-mono">{invoice.number}</span> · {formatDate(invoice.paid_at ?? invoice.created_at, tz)}
+                    {invoice.credit_amount > 0 && ` · potongan ${formatRupiah(invoice.credit_amount)}`}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="font-mono text-ink">{formatRupiah(invoice.amount)}</span>
+                  <InvoiceTag status={invoice.status} expired={Boolean(invoice.expires_at && new Date(invoice.expires_at) <= now)} />
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   );
 }
@@ -299,4 +415,93 @@ function PlanCard({
       {action && <div className="mt-auto pt-2">{action}</div>}
     </Card>
   );
+}
+
+function formatDateTime(value: string, timezone: string): string {
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+    timeZone: timezone,
+  }).format(new Date(value));
+}
+
+function InvoiceTag({ status, expired }: { status: string; expired: boolean }) {
+  if (status === "paid") return <Tag>Lunas</Tag>;
+  if (status === "pending" && !expired) return <Tag tone="outline">Menunggu</Tag>;
+  if (status === "failed") return <Tag tone="outline">Gagal</Tag>;
+  return <Tag tone="outline">Kedaluwarsa</Tag>;
+}
+
+/** Pesan setelah kembali dari halaman bayar Midtrans (?tagihan=NOMOR). */
+function ReturnNotice({
+  status,
+  planName,
+  periodEnd,
+  timezone,
+}: {
+  status: string;
+  planName: string;
+  periodEnd: string | null;
+  timezone: string;
+}) {
+  if (status === "paid") {
+    return (
+      <FormAlert tone="success">
+        Pembayaran diterima. Paket {planName} aktif{periodEnd ? ` sampai ${formatDate(periodEnd, timezone)}` : ""}.
+      </FormAlert>
+    );
+  }
+  if (status === "pending") {
+    return (
+      <FormAlert tone="success">
+        <RefreshSoon />
+        Menunggu konfirmasi pembayaran dari Midtrans. Halaman ini diperbarui otomatis. Kalau belum bayar, lanjutkan
+        lewat tombol di bawah.
+      </FormAlert>
+    );
+  }
+  return (
+    <FormAlert tone="error">
+      Tagihan {planName} {status === "failed" ? "gagal dibayar" : "sudah kedaluwarsa"}. Pilih paket lagi untuk membuat
+      tagihan baru.
+    </FormAlert>
+  );
+}
+
+/** Tombol di kartu paket: Bayar, Upgrade, Perpanjang, atau belum waktunya. */
+function PlanAction({
+  planCode,
+  cycle,
+  price,
+  option,
+  isCurrent,
+  timezone,
+}: {
+  planCode: string;
+  cycle: BillingCycle;
+  price: number;
+  option: ReturnType<typeof checkoutOption>;
+  isCurrent: boolean;
+  timezone: string;
+}) {
+  if (option.opensAt) {
+    return (
+      <Button variant="secondary" arrow={false} fullWidth disabled>
+        {isCurrent ? "Perpanjang" : "Pilih"} mulai {formatDate(option.opensAt, timezone)}
+      </Button>
+    );
+  }
+  const label =
+    option.kind === "upgrade"
+      ? "Upgrade ke paket ini"
+      : option.kind === "perpanjang"
+        ? isCurrent
+          ? `Perpanjang · ${formatRupiah(price)}`
+          : `Pilih untuk periode berikutnya · ${formatRupiah(price)}`
+        : `Bayar ${formatRupiah(price)}`;
+  return <BayarButton planCode={planCode} cycle={cycle} label={label} primary={option.kind !== "perpanjang" || isCurrent} />;
 }

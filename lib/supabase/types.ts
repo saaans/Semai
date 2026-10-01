@@ -471,6 +471,12 @@ export type Database = {
       };
       invoices: {
         Row: {
+          billing_cycle: string | null;
+          checkout_url: string | null;
+          credit_amount: number;
+          expires_at: string | null;
+          kind: string | null;
+          plan_code: string | null;
           amount: number;
           company_id: string;
           created_at: string;
@@ -488,6 +494,12 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          billing_cycle?: string | null;
+          checkout_url?: string | null;
+          credit_amount?: number;
+          expires_at?: string | null;
+          kind?: string | null;
+          plan_code?: string | null;
           amount: number;
           company_id: string;
           created_at?: string;
@@ -505,6 +517,12 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          billing_cycle?: string | null;
+          checkout_url?: string | null;
+          credit_amount?: number;
+          expires_at?: string | null;
+          kind?: string | null;
+          plan_code?: string | null;
           amount?: number;
           company_id?: string;
           created_at?: string;
@@ -584,6 +602,39 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      payment_events: {
+        Row: {
+          created_at: string;
+          id: number;
+          order_id: string | null;
+          payload: Json;
+          provider: string;
+          result: string | null;
+          signature_valid: boolean;
+          transaction_status: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          id?: never;
+          order_id?: string | null;
+          payload: Json;
+          provider?: string;
+          result?: string | null;
+          signature_valid: boolean;
+          transaction_status?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          id?: never;
+          order_id?: string | null;
+          payload?: Json;
+          provider?: string;
+          result?: string | null;
+          signature_valid?: boolean;
+          transaction_status?: string | null;
+        };
+        Relationships: [];
       };
       payroll_adjustments: {
         Row: {
@@ -1311,6 +1362,21 @@ export type Database = {
       cancel_cash_advance: {
         Args: { p_cash_advance_id: string; p_reason: string };
         Returns: undefined;
+      };
+      create_checkout_invoice: {
+        Args: { p_company_id: string; p_plan_code: string; p_cycle: string };
+        Returns: Database["public"]["Tables"]["invoices"]["Row"];
+      };
+      set_invoice_checkout: { Args: { p_invoice_id: string; p_checkout_url: string }; Returns: undefined };
+      apply_payment: {
+        Args: {
+          p_order_id: string;
+          p_outcome: string;
+          p_gross_amount: number | null;
+          p_payment_method: string | null;
+          p_transaction_id: string | null;
+        };
+        Returns: string;
       };
       lock_payroll_run: {
         Args: { p_company_id: string; p_period_start: string; p_slips: Json };
