@@ -70,22 +70,19 @@ export default async function OwnerPage() {
       </div>
 
       {total > 0 && (
-        <Card className="flex flex-col gap-5 sm:p-7">
-          <div>
-            <p className="text-sm text-smoke">Kehadiran</p>
-            <p className="mt-1 font-display text-4xl font-light tracking-tight sm:text-5xl">
-              <span className="tabular-nums">{board.summary.masuk}</span>
-              <span className="text-ash"> dari </span>
-              <span className="tabular-nums">{total}</span>
-              <span className="text-ash"> sudah absen</span>
+        <Card className="flex flex-col gap-5">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+            <p className="text-lg text-ink">
+              <span className="font-medium tabular-nums">{board.summary.masuk}</span>
+              <span className="text-smoke"> dari </span>
+              <span className="font-medium tabular-nums">{total}</span>
+              <span className="text-smoke"> karyawan sudah absen</span>
             </p>
             {lewatJam > 0 && (
-              <p className="mt-2 text-sm text-graphite">
-                {lewatJam} orang sudah lewat jam masuk tapi belum absen.
-              </p>
+              <p className="text-sm text-graphite">{lewatJam} orang lewat jam masuk, belum absen</p>
             )}
           </div>
-          <KehadiranBar data={kehadiran} />
+          <KehadiranBar data={kehadiran} legend="grid" className="gap-5" />
         </Card>
       )}
 

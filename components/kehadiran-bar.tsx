@@ -25,13 +25,14 @@ const SEGMENTS: { key: keyof Kehadiran; label: string; swatch: string }[] = [
 export function KehadiranBar({
   data,
   animate = false,
-  legend = true,
+  legend = "inline",
   className,
 }: {
   data: Kehadiran;
   /** Isi bar bergerak dari kiri saat pertama tampil (landing). */
   animate?: boolean;
-  legend?: boolean;
+  /** inline = satu baris kecil, grid = kolom angka sejajar, false = tanpa legenda. */
+  legend?: "inline" | "grid" | false;
   className?: string;
 }) {
   const total = SEGMENTS.reduce((sum, s) => sum + data[s.key], 0);
@@ -50,7 +51,20 @@ export function KehadiranBar({
           ) : null,
         )}
       </div>
-      {legend && (
+      {legend === "grid" && (
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
+          {SEGMENTS.filter((s) => data[s.key] > 0 || s.key !== "lainnya").map((s) => (
+            <div key={s.key} className="flex flex-col gap-1">
+              <dt className="flex items-center gap-1.5 text-sm text-smoke">
+                <span aria-hidden className={cn("size-2.5 rounded-full", s.swatch, s.key === "belum" && "ring-1 ring-ash ring-inset")} />
+                {s.label}
+              </dt>
+              <dd className="font-display text-3xl font-light tracking-tight tabular-nums">{data[s.key]}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      {legend === "inline" && (
         <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-smoke">
           {SEGMENTS.filter((s) => data[s.key] > 0 || s.key !== "lainnya").map((s) => (
             <li key={s.key} className="flex items-center gap-1.5">
