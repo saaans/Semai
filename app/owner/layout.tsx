@@ -19,6 +19,9 @@ export default async function OwnerLayout({ children }: { children: React.ReactN
           <Link href="/owner/karyawan" className="min-h-11 content-center rounded-button px-2.5 text-graphite hover:bg-taupe hover:text-ink">
             Karyawan
           </Link>
+          <Link href="/owner/pengaturan" className="min-h-11 content-center rounded-button px-2.5 text-graphite hover:bg-taupe hover:text-ink">
+            Pengaturan
+          </Link>
         </nav>
         <div className="flex min-w-0 items-center gap-3">
           <span className="hidden truncate text-sm text-smoke sm:inline">{owner.email ?? "Owner"}</span>

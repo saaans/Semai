@@ -23,6 +23,10 @@ export type Database = {
           clock_out_lat: number | null;
           clock_out_lng: number | null;
           clock_out_photo_path: string | null;
+          clock_in_offline: boolean;
+          clock_in_request_id: string | null;
+          clock_out_offline: boolean;
+          clock_out_request_id: string | null;
           company_id: string;
           corrected_at: string | null;
           corrected_by: string | null;
@@ -36,6 +40,9 @@ export type Database = {
           location_id: string | null;
           mock_location_suspected: boolean;
           overtime_minutes: number;
+          overtime_decided_at: string | null;
+          overtime_decided_by: string | null;
+          overtime_status: string | null;
           photos_deleted_at: string | null;
           scheduled_end: string | null;
           scheduled_start: string | null;
@@ -56,6 +63,10 @@ export type Database = {
           clock_out_lat?: number | null;
           clock_out_lng?: number | null;
           clock_out_photo_path?: string | null;
+          clock_in_offline?: boolean;
+          clock_in_request_id?: string | null;
+          clock_out_offline?: boolean;
+          clock_out_request_id?: string | null;
           company_id: string;
           corrected_at?: string | null;
           corrected_by?: string | null;
@@ -69,6 +80,9 @@ export type Database = {
           location_id?: string | null;
           mock_location_suspected?: boolean;
           overtime_minutes?: number;
+          overtime_decided_at?: string | null;
+          overtime_decided_by?: string | null;
+          overtime_status?: string | null;
           photos_deleted_at?: string | null;
           scheduled_end?: string | null;
           scheduled_start?: string | null;
@@ -89,6 +103,10 @@ export type Database = {
           clock_out_lat?: number | null;
           clock_out_lng?: number | null;
           clock_out_photo_path?: string | null;
+          clock_in_offline?: boolean;
+          clock_in_request_id?: string | null;
+          clock_out_offline?: boolean;
+          clock_out_request_id?: string | null;
           company_id?: string;
           corrected_at?: string | null;
           corrected_by?: string | null;
@@ -102,6 +120,9 @@ export type Database = {
           location_id?: string | null;
           mock_location_suspected?: boolean;
           overtime_minutes?: number;
+          overtime_decided_at?: string | null;
+          overtime_decided_by?: string | null;
+          overtime_status?: string | null;
           photos_deleted_at?: string | null;
           scheduled_end?: string | null;
           scheduled_start?: string | null;
@@ -238,6 +259,7 @@ export type Database = {
       companies: {
         Row: {
           archived_at: string | null;
+          attendance_mode: string;
           branch_count: number;
           business_type: string | null;
           city: string | null;
@@ -255,6 +277,7 @@ export type Database = {
         };
         Insert: {
           archived_at?: string | null;
+          attendance_mode?: string;
           branch_count?: number;
           business_type?: string | null;
           city?: string | null;
@@ -272,6 +295,7 @@ export type Database = {
         };
         Update: {
           archived_at?: string | null;
+          attendance_mode?: string;
           branch_count?: number;
           business_type?: string | null;
           city?: string | null;
@@ -997,6 +1021,32 @@ export type Database = {
           p_base_salary: number;
         };
         Returns: { employee_id: string; token: string; expires_at: string }[];
+      };
+      clock_in: {
+        Args: {
+          p_company_id: string;
+          p_lat: number;
+          p_lng: number;
+          p_accuracy_m: number;
+          p_photo_path: string;
+          p_request_id: string;
+          p_device_captured_at?: string | null;
+          p_offline?: boolean;
+        };
+        Returns: Database["public"]["Tables"]["attendances"]["Row"][];
+      };
+      clock_out: {
+        Args: {
+          p_company_id: string;
+          p_lat: number;
+          p_lng: number;
+          p_accuracy_m: number;
+          p_photo_path: string;
+          p_request_id: string;
+          p_device_captured_at?: string | null;
+          p_offline?: boolean;
+        };
+        Returns: Database["public"]["Tables"]["attendances"]["Row"][];
       };
       complete_onboarding: {
         Args: { p_company_id: string; p_choice: string; p_plan_code?: string };
