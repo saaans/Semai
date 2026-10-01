@@ -81,11 +81,14 @@ export default async function PaketPage({
       .eq("number", params.tagihan)
       .maybeSingle();
     if (returning?.status === "pending") {
-      await processMidtransOrder(config, returning.number, {
+      const { result } = await processMidtransOrder(config, returning.number, {
         payload: { sumber: "halaman_paket" },
         signatureValid: true,
         source: "cek_status",
       });
+      // Layout sudah membaca paket lama di request ini: muat ulang supaya
+      // banner, status, dan kartu paket memakai data baru.
+      if (result === "lunas") redirect(`/owner/paket?tagihan=${encodeURIComponent(returning.number)}`);
     }
   }
 
