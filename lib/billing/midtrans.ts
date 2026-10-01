@@ -1,28 +1,26 @@
 import "server-only";
-import { z } from "zod";
 
 /**
  * Midtrans Snap (buat transaksi) dan Core API (cek status), lewat fetch.
  * Server key hanya dibaca di server dari MIDTRANS_SERVER_KEY.
  */
 
-const midtransEnvSchema = z.object({
-  MIDTRANS_SERVER_KEY: z.string().min(1),
-  MIDTRANS_IS_PRODUCTION: z.enum(["true", "false"]).default("false"),
-});
-
 export type MidtransConfig = { serverKey: string; production: boolean };
 
-/** Konfigurasi Midtrans, atau null kalau belum diisi (pembayaran online nonaktif). */
+/**
+ * Konfigurasi Midtrans, atau null kalau MIDTRANS_SERVER_KEY belum diisi
+ * (pembayaran online nonaktif). MIDTRANS_IS_PRODUCTION hanya "true" (huruf
+ * apa pun) yang berarti produksi; selain itu sandbox.
+ */
 export function getMidtransConfig(): MidtransConfig | null {
-  const parsed = midtransEnvSchema.safeParse({
-    MIDTRANS_SERVER_KEY: process.env.MIDTRANS_SERVER_KEY?.trim() || undefined,
-    MIDTRANS_IS_PRODUCTION: process.env.MIDTRANS_IS_PRODUCTION?.trim() || undefined,
-  });
-  if (!parsed.success) return null;
+  const serverKey = process.env.MIDTRANS_SERVER_KEY?.trim();
+  if (!serverKey) {
+    console.error("[midtrans] MIDTRANS_SERVER_KEY kosong di environment deployment ini.");
+    return null;
+  }
   return {
-    serverKey: parsed.data.MIDTRANS_SERVER_KEY,
-    production: parsed.data.MIDTRANS_IS_PRODUCTION === "true",
+    serverKey,
+    production: process.env.MIDTRANS_IS_PRODUCTION?.trim().toLowerCase() === "true",
   };
 }
 
