@@ -16,3 +16,7 @@ next-env.d.ts
 .DS_Store
 npm-debug.log*
 .vercel
+
+# supabase cli
+/supabase/.temp
+/supabase/.branches
