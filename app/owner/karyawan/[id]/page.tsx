@@ -90,7 +90,7 @@ export default async function DetailKaryawanPage({ params }: { params: Promise<{
           employeeId={employee.id}
           isRemote={employee.is_remote}
           unlocked={hasFeature(plan, "absen_remote")}
-          planLabel={minLevelLabel(plan, "absen_remote") ?? "Dasar"}
+          planLabel={minLevelLabel(plan, "absen_remote") ?? "Berbayar"}
           graceNote={
             !employee.is_remote
               ? null

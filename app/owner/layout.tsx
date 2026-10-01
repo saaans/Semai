@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { LogoutButton } from "@/components/logout-button";
 import { requireOwner } from "@/lib/auth/session";
+import { getBillingOverview } from "@/lib/billing/server";
 import { companyLogoUrl } from "@/lib/company/logo";
 import { getCompanyPlan } from "@/lib/plans-server";
 import { createClient } from "@/lib/supabase/server";
+import { BillingBanner } from "./_components/billing-banner";
 import { buildOwnerMenu } from "./_components/menu";
 import { OwnerNav } from "./_components/owner-nav";
 
@@ -27,9 +29,11 @@ export default async function OwnerLayout({ children }: { children: React.ReactN
   }
 
   const supabase = await createClient();
-  const [plan, { data: company }] = await Promise.all([
+  const [plan, overview, { data: company }] = await Promise.all([
     getCompanyPlan(owner.companyId),
-    supabase.from("companies").select("name, logo_path").eq("id", owner.companyId).maybeSingle(),
+    // Banner tagihan tidak boleh membuat seluruh area owner gagal dimuat.
+    getBillingOverview(owner.companyId).catch(() => null),
+    supabase.from("companies").select("name, logo_path, timezone").eq("id", owner.companyId).maybeSingle(),
   ]);
 
   return (
@@ -46,6 +50,7 @@ export default async function OwnerLayout({ children }: { children: React.ReactN
         }
       />
       <main className="mx-auto flex w-full max-w-5xl min-w-0 flex-1 flex-col gap-6 px-5 py-6 sm:px-8 lg:py-10">
+        {overview && <BillingBanner overview={overview} timezone={company?.timezone ?? "Asia/Jakarta"} />}
         {children}
       </main>
     </div>

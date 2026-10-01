@@ -34,7 +34,7 @@ export default async function TambahKaryawanPage() {
           planName={quota.planName}
           limit={quota.limit}
           remoteUnlocked={hasFeature(plan, "absen_remote")}
-          remotePlanLabel={minLevelLabel(plan, "absen_remote") ?? "Dasar"}
+          remotePlanLabel={minLevelLabel(plan, "absen_remote") ?? "Berbayar"}
         />
       )}
     </div>

@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Tag } from "@/components/ui/tag";
 
@@ -14,9 +14,9 @@ export function UpgradeCard({ planName, limit }: { planName: string; limit: numb
         tetap jalan seperti biasa.
       </CardDescription>
       <div className="mt-4">
-        <Button variant="secondary" arrow={false} disabled>
-          Lihat paket · segera tersedia
-        </Button>
+        <ButtonLink href="/owner/paket" variant="secondary">
+          Lihat paket
+        </ButtonLink>
       </div>
     </Card>
   );

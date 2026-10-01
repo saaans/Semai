@@ -27,6 +27,14 @@ export const FEATURE_INFO: Partial<Record<FeatureKey, { label: string; benefit: 
     label: "Multi-cabang",
     benefit: "Kelola beberapa cabang dengan lokasi absen dan radius masing-masing dalam satu akun.",
   },
+  slip_tanpa_watermark: {
+    label: "Slip tanpa watermark",
+    benefit: "Slip gaji PDF tampil bersih dengan nama dan logo usahamu, tanpa tulisan \"Dibuat dengan Semai\".",
+  },
+  wa_auto: {
+    label: "Kirim slip otomatis",
+    benefit: "Slip gaji terkirim otomatis ke WA setiap karyawan begitu gajian dikunci, tanpa buka WA satu per satu.",
+  },
   export: {
     label: "Export",
     benefit: "Unduh rekap absen dan gajian ke Excel atau PDF untuk pembukuan.",
@@ -67,7 +75,7 @@ const FEATURE_MENU: FeatureKey[] = [
 ];
 
 /** Halaman fitur yang sudah dibuat. */
-const FEATURE_PAGE: Partial<Record<FeatureKey, string>> = {
+export const FEATURE_PAGE: Partial<Record<FeatureKey, string>> = {
   kasbon: "/owner/kasbon",
 };
 
@@ -98,7 +106,7 @@ export function buildOwnerMenu(plan: CompanyPlan): MenuItem[][] {
     ],
     FEATURE_MENU.map((key) => featureItem(plan, key)),
     [
-      { label: "Paket", href: "/owner/paket", state: "segera" },
+      { label: "Paket", href: "/owner/paket", state: "aktif" },
       { label: "Pengaturan", href: "/owner/pengaturan", state: "aktif" },
     ],
   ];

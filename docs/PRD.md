@@ -64,18 +64,20 @@ Momen paling penting adalah **absen pertama**. Seluruh onboarding diarahkan ke s
 
 ## 5. Paket & harga
 
-Harga per bulan. Bayar tahunan gratis 2 bulan. Trial Plus 14 hari tanpa kartu kredit.
+Satu harga per paket (keputusan Langkah 8, menggantikan pilihan Dasar/Plus). Benih gratis; semua paket berbayar membuka semua fitur. Harga per bulan, bayar tahunan gratis 2 bulan. Trial semua fitur 14 hari tanpa kartu kredit.
 
-| Paket | Karyawan aktif | Dasar | Plus | Plus / tahun |
-|---|---|---|---|---|
-| Benih | 1–5 | Gratis | – | – |
-| Tunas | 2–5 | Rp39.000 | Rp79.000 | Rp790.000 |
-| Tumbuh | 6–15 | Rp69.000 | Rp149.000 | Rp1.490.000 |
-| Berkembang | 16–30 | Rp129.000 | Rp249.000 | Rp2.490.000 |
-| Rindang | 31–50 | Rp199.000 | Rp399.000 | Rp3.990.000 |
-| Hutan | 51+ | Hubungi kami | Hubungi kami | Custom |
+| Paket | Karyawan aktif | Per bulan | Per tahun |
+|---|---|---|---|
+| Benih | 1–5 | Gratis | – |
+| Tunas | 2–5 | Rp39.000 | Rp390.000 |
+| Tumbuh | 6–15 | Rp69.000 | Rp690.000 |
+| Berkembang | 16–30 | Rp129.000 | Rp1.290.000 |
+| Rindang | 31–50 | Rp199.000 | Rp1.990.000 |
+| Hutan | 51+ | Hubungi kami | Custom |
 
-**Prinsip biaya:** Benih tidak boleh menimbulkan biaya variabel. Semua yang ditagih per pemakaian (WA API, email massal, AI) hanya di Plus.
+**Prinsip biaya:** Benih tidak boleh menimbulkan biaya variabel. Semua yang ditagih per pemakaian (WA API, email massal, AI) hanya di paket berbayar.
+
+Di bawah ini "Dasar" dan "Plus" adalah rancangan awal. Sekarang kolom **Plus = paket berbayar**; kolom Dasar tidak dijual lagi.
 
 ## 6. Matriks fitur
 
@@ -186,7 +188,7 @@ Owner langsung masuk onboarding setelah daftar. Satu layar satu topik, progress 
 
 ## 9. Fitur terkunci
 
-- Semua menu selalu terlihat. Fitur di luar paket diberi gembok + label paket minimum ("Shift & Jadwal · Plus").
+- Semua menu selalu terlihat. Fitur di luar paket diberi gembok + label paket minimum ("Shift & Jadwal · Berbayar").
 - Klik membuka halaman pratinjau berisi contoh data yang diburamkan + satu kartu: manfaat, harga mulai dari, tombol "Coba gratis 14 hari" dan "Lihat paket".
 - Tombol fitur terkunci muncul di sebelah versi gratisnya (kirim slip otomatis di sebelah kirim manual).
 - Maksimal satu ajakan upgrade per halaman. Kartu promosi bisa ditutup, tidak muncul lagi 7 hari.
@@ -207,6 +209,13 @@ Owner langsung masuk onboarding setelah daftar. Satu layar satu topik, progress 
 | Foto absen | Kompres ±50 KB di perangkat. Hapus otomatis sesuai masa simpan |
 | Koreksi absen | Wajib alasan, nilai sebelum/sesudah tercatat, terlihat karyawan |
 | Gajian dikunci | Slip terkirim tidak bisa diubah. Perubahan jadi penyesuaian periode berikutnya |
+
+**Keputusan Langkah 8 (paket dan langganan)**
+
+- Karyawan di atas batas paket (setelah trial habis atau turun paket): tenggang 14 hari sejak usaha melewati batas, lalu karyawan aktif + diundang yang paling baru ditambahkan disembunyikan dari owner (daftar, rekap, gajian). Tidak dihapus, tetap bisa absen, dan muncul lagi setelah upgrade atau setelah karyawan lain dinonaktifkan. Lewat 90 hari tetap disimpan; penghapusan diputuskan belakangan.
+- Menambah karyawan saat kuota penuh langsung ditolak dan diarahkan ke halaman Paket (tidak ada tenggang untuk penambahan).
+- Upgrade di tengah periode: sisa nilai paket lama dipotong prorata dari tagihan baru, periode baru mulai saat bayar. Turun paket berlaku di periode berikutnya.
+- Mode baca saja (tagihan lewat 7 hari): owner boleh keluar dengan pindah ke Benih tanpa melunasi; data di atas batas Benih mengikuti aturan karyawan di atas.
 
 ## 11. Non-fungsional
 

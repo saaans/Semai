@@ -23,17 +23,21 @@ export const FEATURE_KEYS = [
 ] as const;
 export type FeatureKey = (typeof FEATURE_KEYS)[number];
 
+/**
+ * Label level untuk owner. Sejak satu harga per paket, semua paket berbayar
+ * (Tunas sampai Hutan) memakai level plus; level dasar tidak dijual lagi.
+ */
 export const LEVEL_LABEL: Record<Level, string> = {
   benih: "Benih",
   dasar: "Dasar",
-  plus: "Plus",
+  plus: "Berbayar",
 };
 
 export type CompanyPlan = {
   level: Level;
   /** Fitur aktif di level usaha ini. */
   features: FeatureKey[];
-  /** Level termurah yang membuka tiap fitur (null = belum ada di paket mana pun). */
+  /** Level termurah yang dijual dan membuka tiap fitur (null = belum ada di paket mana pun). */
   minLevel: Partial<Record<FeatureKey, Level>>;
 };
 
@@ -49,7 +53,7 @@ export function hasFeature(company: CompanyPlan, key: FeatureKey): boolean {
   return company.features.includes(key);
 }
 
-/** "Plus" untuk fitur yang baru terbuka di paket Plus. */
+/** "Berbayar" untuk fitur yang terbuka di paket berbayar. */
 export function minLevelLabel(company: CompanyPlan, key: FeatureKey): string | null {
   const level = company.minLevel[key];
   return level ? LEVEL_LABEL[level] : null;

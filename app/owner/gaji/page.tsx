@@ -9,6 +9,8 @@ import { monthLabel } from "@/lib/attendance/recap";
 import { getSiteUrl } from "@/lib/auth/site-url";
 import { requireOwner } from "@/lib/auth/session";
 import { formatDate, formatMinutes, formatRupiah } from "@/lib/format";
+import { hasFeature, minLevelLabel } from "@/lib/plans";
+import { getCompanyPlan } from "@/lib/plans-server";
 import { monthPeriod } from "@/lib/payroll/attendance";
 import {
   buildPayrollPreview,
@@ -239,11 +241,14 @@ async function LockedView({
   timezone: string;
 }) {
   const supabase = await createClient();
-  const [site, { data: company }] = await Promise.all([
+  const [site, { data: company }, plan] = await Promise.all([
     getSiteUrl(),
     supabase.from("companies").select("name").eq("id", companyId).maybeSingle(),
+    getCompanyPlan(companyId),
   ]);
   const companyName = company?.name ?? "kami";
+  // Kirim otomatis (Plus) tampil terkunci di sebelah kirim manual.
+  const waAutoLabel = hasFeature(plan, "wa_auto") ? null : minLevelLabel(plan, "wa_auto");
 
   return (
     <>
@@ -253,6 +258,18 @@ async function LockedView({
           {formatDate(run.lockedAt, timezone)}. Perubahan dicatat sebagai penyesuaian di gajian berikutnya.
         </span>
       </div>
+
+      {waAutoLabel && (
+        <div>
+          <Link
+            href="/owner/fitur/wa_auto"
+            className="inline-flex min-h-11 items-center gap-1.5 text-sm text-graphite underline underline-offset-4 hover:text-ink"
+          >
+            <LockIcon />
+            Kirim slip otomatis ke semua · {waAutoLabel}
+          </Link>
+        </div>
+      )}
 
       <Totals
         items={[
@@ -305,5 +322,14 @@ async function LockedView({
         })}
       </ul>
     </>
+  );
+}
+
+function LockIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <rect x="5" y="11" width="14" height="10" rx="2" />
+      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+    </svg>
   );
 }
