@@ -346,7 +346,7 @@ as $$
   limit 1;
 $$;
 
--- Trial Plus 14 hari, sekali per usaha. Hanya owner.
+-- Trial semua fitur 14 hari (paket berbayar sesuai jumlah karyawan), sekali per usaha. Hanya owner.
 create or replace function public.start_trial_plus(p_company_id uuid)
 returns timestamptz
 language plpgsql
@@ -365,13 +365,13 @@ begin
   perform 1 from public.companies c where c.id = p_company_id for update;
 
   if exists (select 1 from public.subscriptions s where s.company_id = p_company_id) then
-    raise exception 'Trial Plus hanya bisa dipakai sekali per usaha. Pilih paket di menu Paket.'
+    raise exception 'Trial gratis hanya bisa dipakai sekali per usaha. Pilih paket di menu Paket.'
       using errcode = 'P0001', hint = 'trial_terpakai';
   end if;
 
   v_plan_code := public.plus_plan_for_company(p_company_id);
   if v_plan_code is null then
-    raise exception 'Paket Plus belum tersedia. Hubungi tim Semai.' using errcode = 'P0001', hint = 'paket_tidak_ada';
+    raise exception 'Paket berbayar belum tersedia. Hubungi tim Semai.' using errcode = 'P0001', hint = 'paket_tidak_ada';
   end if;
 
   insert into public.subscriptions (company_id, plan_code, status, trial_ends_at, current_period_start, current_period_end)

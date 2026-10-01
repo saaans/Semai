@@ -21,7 +21,7 @@ Aplikasi absensi dan penggajian untuk usaha kecil di Indonesia (2–50 karyawan)
 - **Kompres foto**: di browser sebelum upload (target ±50 KB)
 - **Validasi**: Zod di form dan di server action
 - **Pembayaran langganan**: Midtrans atau Xendit (fase akhir MVP)
-- **WhatsApp otomatis**: Meta WhatsApp Cloud API, **hanya paket Plus**, bukan bagian MVP
+- **WhatsApp otomatis**: Meta WhatsApp Cloud API, **hanya paket berbayar**, bukan bagian MVP
 
 ## Struktur
 
@@ -50,7 +50,7 @@ docs/
 
 | Peran | Area | Login |
 |---|---|---|
-| Owner (+ admin di Plus) | `/owner` | Google atau email + password |
+| Owner (+ admin di paket berbayar) | `/owner` | Google atau email + password |
 | Karyawan | `/app` | Nomor HP + PIN 6 digit |
 | Super admin | `/admin` | Email tim Semai, flag `is_platform_admin` |
 
@@ -72,16 +72,18 @@ docs/
 
 ## Paket
 
-Fitur ditentukan oleh **level** (`benih`, `dasar`, `plus`). Rentang karyawan hanya menentukan harga dan batas jumlah karyawan aktif. Semua dibaca dari tabel `plans` dan `plan_features`, jangan di-hardcode di komponen. Gunakan helper `hasFeature(company, key)` di app dan fungsi SQL `has_feature(company_id, key)` di RLS/RPC.
+**Satu harga per paket.** Benih gratis dengan fitur dasar; semua paket berbayar (Tunas sampai Hutan) membuka semua fitur. Rentang karyawan hanya menentukan harga dan batas jumlah karyawan aktif. Di database fitur tetap ditentukan oleh **level**: Benih = `benih`, paket berbayar = `plus` (baris `{tier}_plus` di tabel `plans`). Level `dasar` tidak dijual lagi (baris `{tier}_dasar` nonaktif). Label level `plus` untuk owner: "Berbayar". Semua dibaca dari tabel `plans` dan `plan_features`, jangan di-hardcode di komponen. Gunakan helper `hasFeature(company, key)` di app dan fungsi SQL `has_feature(company_id, key)` di RLS/RPC.
 
-| Paket | Karyawan | Dasar | Plus |
-|---|---|---|---|
-| Benih | 1–5 | Gratis | – |
-| Tunas | 2–5 | Rp39.000 | Rp79.000 |
-| Tumbuh | 6–15 | Rp69.000 | Rp149.000 |
-| Berkembang | 16–30 | Rp129.000 | Rp249.000 |
-| Rindang | 31–50 | Rp199.000 | Rp399.000 |
-| Hutan | 51+ | Custom | Custom |
+| Paket | Karyawan | Harga / bulan |
+|---|---|---|
+| Benih | 1–5 | Gratis |
+| Tunas | 2–5 | Rp39.000 |
+| Tumbuh | 6–15 | Rp69.000 |
+| Berkembang | 16–30 | Rp129.000 |
+| Rindang | 31–50 | Rp199.000 |
+| Hutan | 51+ | Custom |
+
+Tahunan = 10 × bulanan (gratis 2 bulan). Trial semua fitur 14 hari, sekali per usaha.
 
 Feature keys: `kasbon`, `shift`, `cuti`, `multi_lokasi`, `wa_auto`, `export`, `import_excel`, `bpjs_pph21`, `thr`, `admin_tambahan`, `slip_tanpa_watermark`, `absen_remote`.
 

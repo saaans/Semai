@@ -20,7 +20,7 @@ export function PaketForm({
       {state.message && <FormAlert tone="error">{state.message}</FormAlert>}
       <input type="hidden" name="planCode" value={paid.code} />
       <Button type="submit" name="choice" value="trial_plus" fullWidth disabled={pending}>
-        {pending ? "Menyiapkan usahamu…" : "Coba Plus gratis 14 hari"}
+        {pending ? "Menyiapkan usahamu…" : "Coba semua fitur gratis 14 hari"}
       </Button>
       <Button
         type="submit"

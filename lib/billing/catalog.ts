@@ -3,7 +3,7 @@
  * tabel plans (lihat lib/billing/server.ts); file ini hanya menyusun.
  */
 
-import { LEVEL_LABEL, type Level } from "@/lib/plans";
+import type { Level } from "@/lib/plans";
 
 export type PlanRow = {
   code: string;
@@ -63,36 +63,30 @@ export function startingPrice(plans: PlanRow[], level: Level): number | null {
   return prices.length ? Math.min(...prices) : null;
 }
 
-export type TierGroup = {
-  tier: string;
+export type PaidPlan = {
+  plan: PlanRow;
+  /** "Tunas", "Tumbuh", ... */
   label: string;
   range: string;
-  /** false kalau karyawanmu sekarang melebihi batas tier ini. */
+  /** false kalau karyawanmu sekarang melebihi batas paket ini. */
   fits: boolean;
-  /** Harga custom: tidak bisa dibayar online. */
+  /** Harga custom (Hutan): tidak bisa dibayar online. */
   custom: boolean;
-  options: { level: Level; levelLabel: string; plan: PlanRow }[];
 };
 
-/** Paket berbayar dikelompokkan per tier, urut dari kecil ke besar. */
-export function tierGroups(plans: PlanRow[], employeesUsed: number): TierGroup[] {
-  const groups = new Map<string, TierGroup>();
-  for (const plan of [...plans].sort((a, b) => a.sort_order - b.sort_order)) {
-    if (plan.level !== "dasar" && plan.level !== "plus") continue;
-    let group = groups.get(plan.tier);
-    if (!group) {
-      group = {
-        tier: plan.tier,
-        label: TIER_LABEL[plan.tier] ?? plan.tier,
-        range: rangeLabel(plan),
-        fits: fitsEmployees(plan, employeesUsed),
-        custom: false,
-        options: [],
-      };
-      groups.set(plan.tier, group);
-    }
-    if (plan.price_monthly === null) group.custom = true;
-    group.options.push({ level: plan.level, levelLabel: LEVEL_LABEL[plan.level], plan });
-  }
-  return [...groups.values()];
+/**
+ * Paket berbayar, satu harga per paket, urut dari kecil ke besar. Benih
+ * (gratis) dan level yang tidak dijual lagi (dasar) tidak ikut.
+ */
+export function paidPlans(plans: PlanRow[], employeesUsed: number): PaidPlan[] {
+  return [...plans]
+    .filter((plan) => plan.level === "plus")
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((plan) => ({
+      plan,
+      label: TIER_LABEL[plan.tier] ?? plan.name,
+      range: rangeLabel(plan),
+      fits: fitsEmployees(plan, employeesUsed),
+      custom: plan.price_monthly === null,
+    }));
 }

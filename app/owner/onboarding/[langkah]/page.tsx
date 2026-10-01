@@ -177,7 +177,7 @@ async function PaketStep({ data }: { data: OnboardingData }) {
     branchCount: data.company.branch_count,
   });
   // Rekomendasi Benih: pilihan berbayar termurah untuk rentang ini.
-  const paidCode = recommendation.level === "benih" ? "tunas_dasar" : recommendation.code;
+  const paidCode = recommendation.level === "benih" ? "tunas_plus" : recommendation.code;
   const trialCode = trialPlanCode(employeeRange);
 
   const supabase = await createClient();

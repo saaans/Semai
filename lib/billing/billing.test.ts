@@ -1,16 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { planPrice, rangeLabel, startingPrice, tierGroups, yearlySaving, type PlanRow } from "./catalog";
+import { paidPlans, planPrice, rangeLabel, startingPrice, yearlySaving, type PlanRow } from "./catalog";
 import { addDays, billingStateAt, daysLeft, quotaStatus, shouldWarnQuota } from "./state";
 
-// Sama dengan seed tabel plans.
+// Sama dengan tabel plans setelah satu harga per paket (dasar tidak dijual).
 const PLANS: PlanRow[] = [
   ["benih", "benih", "benih", "Benih", 1, 5, 0, 0, 10],
-  ["tunas_dasar", "tunas", "dasar", "Tunas Dasar", 2, 5, 39000, 390000, 20],
-  ["tunas_plus", "tunas", "plus", "Tunas Plus", 2, 5, 79000, 790000, 21],
-  ["tumbuh_dasar", "tumbuh", "dasar", "Tumbuh Dasar", 6, 15, 69000, 690000, 30],
-  ["tumbuh_plus", "tumbuh", "plus", "Tumbuh Plus", 6, 15, 149000, 1490000, 31],
-  ["hutan_dasar", "hutan", "dasar", "Hutan Dasar", 51, null, null, null, 60],
-  ["hutan_plus", "hutan", "plus", "Hutan Plus", 51, null, null, null, 61],
+  ["tunas_plus", "tunas", "plus", "Tunas", 2, 5, 39000, 390000, 21],
+  ["tumbuh_plus", "tumbuh", "plus", "Tumbuh", 6, 15, 69000, 690000, 31],
+  ["hutan_plus", "hutan", "plus", "Hutan", 51, null, null, null, 61],
 ].map(([code, tier, level, name, min, max, monthly, yearly, sort]) => ({
   code: code as string,
   tier: tier as string,
@@ -75,30 +72,28 @@ describe("quotaStatus", () => {
 
 describe("katalog paket", () => {
   it("label rentang dan harga per siklus", () => {
-    expect(rangeLabel(plan("tunas_dasar"))).toBe("2–5 karyawan");
-    expect(rangeLabel(plan("hutan_dasar"))).toBe("51+ karyawan");
-    expect(planPrice(plan("tunas_plus"), "bulanan")).toBe(79000);
-    expect(planPrice(plan("tunas_plus"), "tahunan")).toBe(790000);
-    expect(planPrice(plan("hutan_dasar"), "tahunan")).toBeNull();
+    expect(rangeLabel(plan("tunas_plus"))).toBe("2–5 karyawan");
+    expect(rangeLabel(plan("hutan_plus"))).toBe("51+ karyawan");
+    expect(planPrice(plan("tunas_plus"), "bulanan")).toBe(39000);
+    expect(planPrice(plan("tunas_plus"), "tahunan")).toBe(390000);
+    expect(planPrice(plan("hutan_plus"), "tahunan")).toBeNull();
   });
 
   it("tahunan hemat 2 bulan", () => {
-    expect(yearlySaving(plan("tunas_plus"))).toBe(158000);
-    expect(yearlySaving(plan("hutan_dasar"))).toBe(0);
+    expect(yearlySaving(plan("tunas_plus"))).toBe(78000);
+    expect(yearlySaving(plan("hutan_plus"))).toBe(0);
   });
 
-  it("harga mulai dari per level, tanpa Benih dan harga custom", () => {
-    expect(startingPrice(PLANS, "dasar")).toBe(39000);
-    expect(startingPrice(PLANS, "plus")).toBe(79000);
+  it("harga mulai dari, tanpa Benih dan harga custom", () => {
+    expect(startingPrice(PLANS, "plus")).toBe(39000);
     expect(startingPrice(PLANS, "benih")).toBeNull();
   });
 
-  it("mengelompokkan per tier dan menandai tier yang tidak muat", () => {
-    const groups = tierGroups(PLANS, 7);
-    expect(groups.map((g) => g.tier)).toEqual(["tunas", "tumbuh", "hutan"]);
-    expect(groups[0]).toMatchObject({ fits: false, custom: false });
-    expect(groups[1]).toMatchObject({ fits: true, range: "6–15 karyawan" });
-    expect(groups[1]?.options.map((o) => o.plan.code)).toEqual(["tumbuh_dasar", "tumbuh_plus"]);
-    expect(groups[2]).toMatchObject({ fits: true, custom: true });
+  it("satu baris per paket berbayar, menandai yang tidak muat", () => {
+    const list = paidPlans(PLANS, 7);
+    expect(list.map((p) => p.plan.code)).toEqual(["tunas_plus", "tumbuh_plus", "hutan_plus"]);
+    expect(list[0]).toMatchObject({ label: "Tunas", fits: false, custom: false });
+    expect(list[1]).toMatchObject({ label: "Tumbuh", fits: true, range: "6–15 karyawan" });
+    expect(list[2]).toMatchObject({ label: "Hutan", fits: true, custom: true });
   });
 });

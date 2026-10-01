@@ -100,7 +100,7 @@ export default async function OwnerPage() {
           <CardDescription>
             {remoteCount} karyawan ditandai kerja remote, tapi paket usaha sekarang Benih.{" "}
             {remote.graceUntil
-              ? "Setelah tanggal itu mereka wajib absen dalam radius lokasi. Atur lokasi absen mereka, atau upgrade ke Dasar supaya tetap bisa absen dari mana saja."
+              ? "Setelah tanggal itu mereka wajib absen dalam radius lokasi. Atur lokasi absen mereka, atau upgrade ke paket berbayar supaya tetap bisa absen dari mana saja."
               : "Mereka sekarang wajib absen dalam radius lokasi. Pastikan lokasi absen mereka sudah diatur."}
           </CardDescription>
         </Card>

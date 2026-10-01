@@ -48,7 +48,7 @@ export default async function FiturPage({ params }: { params: Promise<{ key: str
 
   const [overview, plans] = await Promise.all([getBillingOverview(owner.companyId), getPlans()]);
   const minLevel = plan.minLevel[key];
-  const planLabel = minLevelLabel(plan, key) ?? "berbayar";
+  const planLabel = (minLevelLabel(plan, key) ?? "berbayar").toLowerCase();
   const price = minLevel ? startingPrice(plans, minLevel) : null;
   const canTrial = owner.role === "owner" && !overview.trialUsed && overview.level === "benih";
 
@@ -79,7 +79,7 @@ export default async function FiturPage({ params }: { params: Promise<{ key: str
           )}
         </div>
         {canTrial && (
-          <p className="mt-3 text-xs text-ash">Trial Plus 14 hari, tanpa kartu kredit. Setelah itu kembali ke Benih.</p>
+          <p className="mt-3 text-xs text-ash">Semua fitur gratis 14 hari, tanpa kartu kredit. Setelah itu kembali ke Benih.</p>
         )}
       </Card>
       <FeaturePreview featureKey={key} />

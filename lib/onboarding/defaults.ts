@@ -102,10 +102,9 @@ export type PlanRecommendation = {
 };
 
 /**
- * Rekomendasi langkah 6:
+ * Rekomendasi langkah 6 (satu harga per paket, semua fitur):
  * - 1–5 karyawan, jam tetap, 1 cabang → Benih
- * - pakai shift atau lebih dari 1 cabang → Plus sesuai rentang
- * - selain itu → Dasar sesuai rentang
+ * - selain itu → paket berbayar sesuai rentang ({tier}_plus)
  */
 export function recommendPlan(input: {
   employeeRange: EmployeeRange;
@@ -113,16 +112,16 @@ export function recommendPlan(input: {
   branchCount: number;
 }): PlanRecommendation {
   const tier = tierFor(input.employeeRange);
-  const needsPlus = input.mode === "shift" || input.branchCount > 1;
+  const needsPaid = input.mode === "shift" || input.branchCount > 1;
 
-  if (needsPlus) {
+  if (needsPaid) {
     return {
       code: `${tier}_plus`,
       level: "plus",
       reason:
         input.mode === "shift"
-          ? "Usahamu pakai shift. Jadwal shift dan tukar shift ada di paket Plus."
-          : "Usahamu punya lebih dari satu cabang. Banyak lokasi absen ada di paket Plus.",
+          ? "Usahamu pakai shift. Jadwal shift dan tukar shift ada di paket berbayar."
+          : "Usahamu punya lebih dari satu cabang. Banyak lokasi absen ada di paket berbayar.",
     };
   }
   if (input.employeeRange === "1-5") {
@@ -133,13 +132,13 @@ export function recommendPlan(input: {
     };
   }
   return {
-    code: `${tier}_dasar`,
-    level: "dasar",
-    reason: "Gaji, slip, dan kasbon untuk tim dengan jam kerja tetap.",
+    code: `${tier}_plus`,
+    level: "plus",
+    reason: "Gaji, slip, kasbon, dan semua fitur lain sesuai jumlah karyawanmu.",
   };
 }
 
-/** Paket Plus yang dipakai untuk trial 14 hari, sesuai rentang karyawan. */
+/** Paket berbayar yang dipakai untuk trial 14 hari, sesuai rentang karyawan. */
 export function trialPlanCode(range: EmployeeRange): string {
   return `${tierFor(range)}_plus`;
 }
