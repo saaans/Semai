@@ -277,7 +277,11 @@ export type Database = {
           payroll_day_basis: string;
           payroll_fixed_days: number;
           phone: string | null;
+          discount_percent: number | null;
+          discount_reason: string | null;
+          discount_until: string | null;
           suspended_at: string | null;
+          suspend_reason: string | null;
           timezone: string;
           updated_at: string;
         };
@@ -301,7 +305,11 @@ export type Database = {
           payroll_day_basis?: string;
           payroll_fixed_days?: number;
           phone?: string | null;
+          discount_percent?: number | null;
+          discount_reason?: string | null;
+          discount_until?: string | null;
           suspended_at?: string | null;
+          suspend_reason?: string | null;
           timezone?: string;
           updated_at?: string;
         };
@@ -325,7 +333,11 @@ export type Database = {
           payroll_day_basis?: string;
           payroll_fixed_days?: number;
           phone?: string | null;
+          discount_percent?: number | null;
+          discount_reason?: string | null;
+          discount_until?: string | null;
           suspended_at?: string | null;
+          suspend_reason?: string | null;
           timezone?: string;
           updated_at?: string;
         };
@@ -474,6 +486,7 @@ export type Database = {
           billing_cycle: string | null;
           checkout_url: string | null;
           credit_amount: number;
+          discount_amount: number;
           expires_at: string | null;
           kind: string | null;
           plan_code: string | null;
@@ -497,6 +510,7 @@ export type Database = {
           billing_cycle?: string | null;
           checkout_url?: string | null;
           credit_amount?: number;
+          discount_amount?: number;
           expires_at?: string | null;
           kind?: string | null;
           plan_code?: string | null;
@@ -520,6 +534,7 @@ export type Database = {
           billing_cycle?: string | null;
           checkout_url?: string | null;
           credit_amount?: number;
+          discount_amount?: number;
           expires_at?: string | null;
           kind?: string | null;
           plan_code?: string | null;
@@ -1149,6 +1164,70 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      admin_dashboard_metrics: { Args: Record<PropertyKey, never>; Returns: Json };
+      admin_list_companies: {
+        Args: {
+          p_search?: string | null;
+          p_business_type?: string | null;
+          p_city?: string | null;
+          p_plan?: string | null;
+          p_activity?: string | null;
+          p_limit?: number;
+          p_offset?: number;
+        };
+        Returns: {
+          id: string;
+          name: string | null;
+          business_type: string | null;
+          city: string | null;
+          plan_code: string;
+          plan_name: string;
+          subscription_status: string | null;
+          employees_active: number;
+          created_at: string;
+          last_active_at: string | null;
+          suspended_at: string | null;
+          onboarding_done: boolean;
+          total_count: number;
+        }[];
+      };
+      admin_company_cities: { Args: Record<PropertyKey, never>; Returns: string[] };
+      admin_company_detail: { Args: { p_company_id: string }; Returns: Json };
+      admin_company_audit: {
+        Args: { p_company_id: string; p_limit?: number };
+        Returns: {
+          id: number;
+          action: string;
+          actor_role: string;
+          reason: string | null;
+          before: Json | null;
+          after: Json | null;
+          created_at: string;
+        }[];
+      };
+      admin_set_plan: {
+        Args: {
+          p_company_id: string;
+          p_plan_code: string;
+          p_cycle: string | null;
+          p_period_end: string | null;
+          p_price: number | null;
+          p_reason: string;
+        };
+        Returns: undefined;
+      };
+      admin_extend_trial: {
+        Args: { p_company_id: string; p_days: number; p_reason: string };
+        Returns: string;
+      };
+      admin_set_discount: {
+        Args: { p_company_id: string; p_percent: number | null; p_until: string | null; p_reason: string };
+        Returns: undefined;
+      };
+      admin_set_suspended: {
+        Args: { p_company_id: string; p_suspended: boolean; p_reason: string };
+        Returns: undefined;
+      };
       company_level: { Args: { p_company_id: string }; Returns: string };
       add_employee: {
         Args: {

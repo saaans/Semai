@@ -45,6 +45,8 @@ export type OwnerState =
       role: "owner" | "admin";
       phone: string | null;
       onboardingCompleted: boolean;
+      /** Ditangguhkan tim Semai: owner/admin tidak bisa mengubah data. */
+      suspended: boolean;
     };
 
 /**
@@ -84,7 +86,7 @@ export const getOwnerState = cache(async (): Promise<OwnerState> => {
   const [{ data: company }, { data: profile }] = await Promise.all([
     supabase
       .from("companies")
-      .select("onboarding_completed_at")
+      .select("onboarding_completed_at, suspended_at")
       .eq("id", companyId)
       .maybeSingle(),
     supabase.from("profiles").select("phone").eq("id", user.id).maybeSingle(),
@@ -98,6 +100,7 @@ export const getOwnerState = cache(async (): Promise<OwnerState> => {
     role,
     phone: profile?.phone ?? null,
     onboardingCompleted: Boolean(company?.onboarding_completed_at),
+    suspended: Boolean(company?.suspended_at),
   };
 });
 
@@ -113,6 +116,7 @@ export function homePathFor(state: OwnerState): string {
     case "error":
       return "/masuk?error=server";
     case "member":
+      if (state.suspended) return "/ditangguhkan";
       if (!state.phone) return "/lengkapi-wa";
       if (!state.onboardingCompleted) return "/owner/onboarding";
       return "/owner";
@@ -130,6 +134,9 @@ export async function requireOwner() {
     throw new Error("Gagal memuat data usaha. Coba muat ulang halaman.");
   }
   if (state.kind !== "member") redirect(homePathFor(state));
+  // Ditangguhkan tim Semai: seluruh area owner ditutup. Penulisan juga
+  // ditolak di database (guard_read_only); absen karyawan tetap jalan.
+  if (state.suspended) redirect("/ditangguhkan");
   if (!state.phone) redirect("/lengkapi-wa");
   return state;
 }

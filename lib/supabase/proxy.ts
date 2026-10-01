@@ -93,7 +93,7 @@ export async function updateSession(request: NextRequest) {
 }
 
 /** Wajib login owner. /app (karyawan) diatur terpisah di atas. */
-const PROTECTED_PREFIXES = ["/owner", "/admin", "/lengkapi-wa", "/atur-password"];
+const PROTECTED_PREFIXES = ["/owner", "/admin", "/lengkapi-wa", "/atur-password", "/ditangguhkan"];
 
 /** Bagian /app yang boleh dibuka tanpa login. */
 const EMPLOYEE_PUBLIC = ["/app/masuk", "/app/aktivasi"];
