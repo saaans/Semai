@@ -12,8 +12,16 @@ export default async function OwnerLayout({ children }: { children: React.ReactN
         <Link href="/owner" className="font-display text-2xl tracking-tight">
           semai
         </Link>
+        <nav className="flex items-center gap-1 text-sm">
+          <Link href="/owner" className="min-h-11 content-center rounded-button px-2.5 text-graphite hover:bg-taupe hover:text-ink">
+            Hari ini
+          </Link>
+          <Link href="/owner/karyawan" className="min-h-11 content-center rounded-button px-2.5 text-graphite hover:bg-taupe hover:text-ink">
+            Karyawan
+          </Link>
+        </nav>
         <div className="flex min-w-0 items-center gap-3">
-          <span className="truncate text-sm text-smoke">{owner.email ?? "Owner"}</span>
+          <span className="hidden truncate text-sm text-smoke sm:inline">{owner.email ?? "Owner"}</span>
           <LogoutButton />
         </div>
       </header>

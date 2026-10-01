@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
@@ -48,7 +49,13 @@ export default async function OwnerPage() {
       <Card>
         <Tag tone="outline">Placeholder</Tag>
         <CardTitle className="mt-3">Belum ada karyawan</CardTitle>
-        <CardDescription>Onboarding dan undang karyawan dibuat di langkah berikutnya.</CardDescription>
+        <CardDescription>
+          Tambah karyawan dan kirim link undangan lewat WA dari menu{" "}
+          <Link href="/owner/karyawan" className="text-ink underline underline-offset-4">
+            Karyawan
+          </Link>
+          .
+        </CardDescription>
       </Card>
     </>
   );

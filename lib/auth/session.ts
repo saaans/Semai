@@ -142,3 +142,45 @@ export async function requirePlatformAdmin() {
   if (!isAdmin) notFound();
   return user;
 }
+
+export type EmployeeMembership = {
+  employeeId: string;
+  companyId: string;
+  companyName: string;
+  timezone: string;
+  fullName: string;
+};
+
+/**
+ * Wajib karyawan yang sudah login. Dipakai di halaman /app.
+ * Mengembalikan semua usaha tempat dia aktif (bisa lebih dari satu).
+ */
+export async function requireEmployee() {
+  const user = await getSessionUser();
+  if (!user) redirect("/app/masuk");
+  if (!isEmployeeEmail(user.email)) {
+    redirect(homePathFor(await getOwnerState()));
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("employees")
+    .select("id, company_id, full_name, companies (name, timezone)")
+    .eq("user_id", user.id)
+    .eq("status", "aktif")
+    .order("activated_at");
+  if (error) {
+    console.error("[requireEmployee]", error);
+    throw new Error("Gagal memuat data karyawan. Coba muat ulang halaman.");
+  }
+
+  const memberships: EmployeeMembership[] = data.map((row) => ({
+    employeeId: row.id,
+    companyId: row.company_id,
+    companyName: row.companies?.name ?? "Usaha",
+    timezone: row.companies?.timezone ?? "Asia/Jakarta",
+    fullName: row.full_name,
+  }));
+
+  return { userId: user.id, memberships };
+}
