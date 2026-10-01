@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { Geist_Mono, Inter, Onest } from "next/font/google";
+import { TopLoader } from "@/components/top-loader";
 import "./globals.css";
 
 const onest = Onest({
@@ -48,7 +50,12 @@ export default function RootLayout({
       lang="id"
       className={`${onest.variable} ${inter.variable} ${geistMono.variable}`}
     >
-      <body className="min-h-dvh">{children}</body>
+      <body className="min-h-dvh">
+        <Suspense fallback={null}>
+          <TopLoader />
+        </Suspense>
+        {children}
+      </body>
     </html>
   );
 }

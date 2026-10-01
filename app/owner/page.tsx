@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { KehadiranBar } from "@/components/kehadiran-bar";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Tag } from "@/components/ui/tag";
@@ -38,31 +39,52 @@ export default async function OwnerPage() {
   const remoteCount = board.entries.filter((e) => e.isRemote).length;
   const tz = board.timezone;
 
-  const summary = [
-    { label: "Masuk", value: board.summary.masuk },
-    { label: "Telat", value: board.summary.telat },
-    { label: "Izin", value: board.summary.izin },
-    { label: "Belum absen", value: board.summary.belum },
-  ];
+  const total = board.entries.length;
+  const kehadiran = {
+    tepat: board.summary.masuk - board.summary.telat,
+    telat: board.summary.telat,
+    izin: board.summary.izin,
+    lainnya: total - board.summary.masuk - board.summary.izin - board.summary.belum,
+    belum: board.summary.belum,
+  };
+  const lewatJam = board.entries.filter((e) => e.status === "belum" && e.pastStart).length;
 
   return (
     <>
-      <div className="flex flex-col gap-1">
-        <h1 className="text-3xl sm:text-4xl">Hari ini</h1>
-        <p className="text-smoke">
-          {formatDate(board.updatedAt, tz)} · {timezoneLabel(tz)}
-        </p>
-        <AutoRefresh updatedAt={board.updatedAt} />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-1">
+          <p className="text-sm text-smoke">
+            {formatDate(board.updatedAt, tz)} · {timezoneLabel(tz)}
+          </p>
+          <h1 className="text-3xl sm:text-4xl">Hari ini</h1>
+          <AutoRefresh updatedAt={board.updatedAt} />
+        </div>
+        <div className="flex gap-2">
+          <ButtonLink href="/owner/absen" variant="secondary">
+            Rekap bulanan
+          </ButtonLink>
+          <ButtonLink href="/owner/karyawan/tambah" variant="secondary">
+            Tambah karyawan
+          </ButtonLink>
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {summary.map((item) => (
-          <Card key={item.label}>
-            <p className="text-sm text-smoke">{item.label}</p>
-            <p className="mt-2 font-display text-4xl">{item.value}</p>
-          </Card>
-        ))}
-      </div>
+      {total > 0 && (
+        <Card className="flex flex-col gap-5">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+            <p className="text-lg text-ink">
+              <span className="font-medium tabular-nums">{board.summary.masuk}</span>
+              <span className="text-smoke"> dari </span>
+              <span className="font-medium tabular-nums">{total}</span>
+              <span className="text-smoke"> karyawan sudah absen</span>
+            </p>
+            {lewatJam > 0 && (
+              <p className="text-sm text-graphite">{lewatJam} orang lewat jam masuk, belum absen</p>
+            )}
+          </div>
+          <KehadiranBar data={kehadiran} legend="grid" className="gap-5" />
+        </Card>
+      )}
 
       {board.pendingOvertime.length > 0 && (
         <Card className="flex flex-col gap-4">
@@ -134,15 +156,15 @@ export default async function OwnerPage() {
         <section className="flex flex-col gap-3">
           <div className="flex items-baseline justify-between gap-3">
             <h2 className="text-2xl">Absen karyawan</h2>
-            <Link href="/owner/absen" className="text-sm text-graphite underline underline-offset-4 hover:text-ink">
-              Rekap bulanan
-            </Link>
+            <span className="text-sm text-smoke tabular-nums">{total} orang</span>
           </div>
-          <ul className="flex flex-col gap-3">
-            {board.entries.map((entry) => (
-              <EntryCard key={entry.employeeId} entry={entry} timezone={tz} showClockOut={board.attendanceMode === "masuk_pulang"} today={board.today} />
-            ))}
-          </ul>
+          <Card className="p-0 sm:p-0">
+            <ul className="flex flex-col divide-y divide-stone">
+              {board.entries.map((entry) => (
+                <EntryRow key={entry.employeeId} entry={entry} timezone={tz} showClockOut={board.attendanceMode === "masuk_pulang"} today={board.today} />
+              ))}
+            </ul>
+          </Card>
         </section>
       )}
     </>
@@ -166,7 +188,7 @@ function EntryTag({ entry }: { entry: TodayEntry }) {
   }
 }
 
-function EntryCard({
+function EntryRow({
   entry,
   timezone,
   showClockOut,
@@ -177,42 +199,47 @@ function EntryCard({
   showClockOut: boolean;
   today: string;
 }) {
+  const meta = [
+    entry.isRemote ? "Remote" : null,
+    entry.position,
+    entry.workDate !== today ? `Shift ${dayLabel(entry.workDate)}` : null,
+    entry.status === "belum" && entry.scheduleStart ? `Jadwal masuk ${entry.scheduleStart}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
-    <li>
-      <Card className="flex flex-col gap-3 p-4 sm:p-5">
+    <li className="flex gap-3 px-4 py-4 sm:px-6">
+      <span aria-hidden className="mt-0.5 hidden size-9 shrink-0 sm:flex items-center justify-center rounded-full border border-stone bg-canvas text-xs font-medium text-graphite">
+        {entry.name.trim().charAt(0).toUpperCase() || "?"}
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <Link href={`/owner/absen/${entry.employeeId}`} className="font-medium text-ink underline-offset-4 hover:underline">
               {entry.name}
             </Link>
-            <p className="truncate text-sm text-smoke">
-              {[
-                entry.isRemote ? "Remote" : null,
-                entry.position,
-                entry.workDate !== today ? `Shift ${dayLabel(entry.workDate)}` : null,
-                entry.status === "belum" && entry.scheduleStart ? `Jadwal masuk ${entry.scheduleStart}` : null,
-              ]
-                .filter(Boolean)
-                .join(" · ") || " "}
-            </p>
+            {meta && <p className="truncate text-sm text-smoke">{meta}</p>}
           </div>
-          <EntryTag entry={entry} />
+          <div className="flex shrink-0 flex-col items-end sm:flex-row sm:items-center sm:gap-1">
+            <EntryTag entry={entry} />
+            <div className="-mb-2 sm:-my-2">
+              <KoreksiButton
+                employeeId={entry.employeeId}
+                employeeName={entry.name}
+                workDate={entry.workDate}
+                dateLabel={dayLabel(entry.workDate)}
+                initial={koreksiInitial(entry.attendance, timezone)}
+                showClockOut={showClockOut || Boolean(entry.attendance?.clockOutAt)}
+                label={entry.attendance ? "Koreksi" : "Catat manual"}
+              />
+            </div>
+          </div>
         </div>
         {entry.attendance && (
           <AbsenInfo attendance={entry.attendance} timezone={timezone} name={entry.name} radiusM={entry.radiusM} remote={entry.isRemote} />
         )}
-        <div className="-mb-2 flex items-center justify-end gap-2">
-          <KoreksiButton
-            employeeId={entry.employeeId}
-            employeeName={entry.name}
-            workDate={entry.workDate}
-            dateLabel={dayLabel(entry.workDate)}
-            initial={koreksiInitial(entry.attendance, timezone)}
-            showClockOut={showClockOut || Boolean(entry.attendance?.clockOutAt)}
-            label={entry.attendance ? "Koreksi" : "Catat manual"}
-          />
-        </div>
-      </Card>
+      </div>
     </li>
   );
 }
