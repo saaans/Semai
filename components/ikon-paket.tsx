@@ -43,12 +43,10 @@ const PATHS: Record<string, ReactNode> = {
   ),
   hutan: (
     <>
-      <path d="M7 4l-3.5 8h7L7 4Z" />
-      <path d="M7 12v4" />
-      <path d="M17 6l-3.5 8h7L17 6Z" />
-      <path d="M17 14v4" />
-      <path d="M12 9l-3 7h6l-3-7Z" />
-      <path d="M12 16v3" />
+      <path d="M9 3 4 11h2.5L3 17h12l-3.5-6H14L9 3Z" />
+      <path d="M9 17v4" />
+      <path d="M17 9l-3 5h1.5l-2 3.5h7l-2-3.5H20L17 9Z" />
+      <path d="M17 17.5V21" />
       <path d="M2.5 21h19" />
     </>
   ),
@@ -70,5 +68,24 @@ export function IkonPaket({ tier, size = 24, className }: { tier: string; size?:
     >
       {PATHS[tier] ?? PATHS.benih}
     </svg>
+  );
+}
+
+/** Ukuran ikon per tahap: makin besar paketnya, makin besar tanamannya. */
+const TIER_SIZE: Record<string, number> = {
+  benih: 32,
+  tunas: 36,
+  tumbuh: 42,
+  berkembang: 48,
+  rindang: 54,
+  hutan: 60,
+};
+
+/** Ikon paket yang ukurannya tumbuh sesuai tahap, rata bawah seperti di tanah. */
+export function IkonTumbuh({ tier, className }: { tier: string; className?: string }) {
+  return (
+    <span className={`flex h-[60px] items-end ${className ?? ""}`}>
+      <IkonPaket tier={tier} size={TIER_SIZE[tier] ?? 32} />
+    </span>
   );
 }

@@ -19,6 +19,7 @@
   --gold-soft: #f7e7b0; /* badge Premium: ujung terang gradien */
   --gold: #dcae45; /* badge Premium: ujung gelap gradien */
   --on-gold: #3a2905; /* teks di atas emas */
+  --sidebar: #ffffff; /* menu samping owner, sedikit lebih terang dari kanvas */
 
   color-scheme: light;
 }
@@ -39,6 +40,7 @@
     --gold-soft: #f2dd9a;
     --gold: #c9972f;
     --on-gold: #2b1e03;
+    --sidebar: #1b1a18;
 
     color-scheme: dark;
   }
@@ -59,6 +61,7 @@
   --color-gold-soft: var(--gold-soft);
   --color-gold: var(--gold);
   --color-on-gold: var(--on-gold);
+  --color-sidebar: var(--sidebar);
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-onest), ui-sans-serif, system-ui, sans-serif;
