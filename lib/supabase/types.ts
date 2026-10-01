@@ -273,6 +273,8 @@ export type Database = {
           name: string | null;
           onboarding: NonNullable<Json>;
           onboarding_completed_at: string | null;
+          payroll_day_basis: string;
+          payroll_fixed_days: number;
           phone: string | null;
           suspended_at: string | null;
           timezone: string;
@@ -294,6 +296,8 @@ export type Database = {
           name?: string | null;
           onboarding?: NonNullable<Json>;
           onboarding_completed_at?: string | null;
+          payroll_day_basis?: string;
+          payroll_fixed_days?: number;
           phone?: string | null;
           suspended_at?: string | null;
           timezone?: string;
@@ -315,6 +319,8 @@ export type Database = {
           name?: string | null;
           onboarding?: NonNullable<Json>;
           onboarding_completed_at?: string | null;
+          payroll_day_basis?: string;
+          payroll_fixed_days?: number;
           phone?: string | null;
           suspended_at?: string | null;
           timezone?: string;
@@ -570,6 +576,54 @@ export type Database = {
           },
         ];
       };
+      payroll_adjustments: {
+        Row: {
+          amount: number;
+          company_id: string;
+          created_at: string;
+          created_by: string | null;
+          employee_id: string;
+          id: string;
+          period_start: string;
+          reason: string;
+        };
+        Insert: {
+          amount: number;
+          company_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          employee_id: string;
+          id?: string;
+          period_start: string;
+          reason: string;
+        };
+        Update: {
+          amount?: number;
+          company_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          employee_id?: string;
+          id?: string;
+          period_start?: string;
+          reason?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "payroll_adjustments_company_id_fkey";
+            columns: ["company_id"];
+            isOneToOne: false;
+            referencedRelation: "companies";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "payroll_adjustments_employee_id_company_id_fkey";
+            columns: ["employee_id", "company_id"];
+            isOneToOne: false;
+            referencedRelation: "employees";
+            referencedColumns: ["id", "company_id"];
+          },
+        ];
+      };
       payroll_rules: {
         Row: {
           amount: number | null;
@@ -630,6 +684,7 @@ export type Database = {
       payroll_runs: {
         Row: {
           company_id: string;
+          company_snapshot: NonNullable<Json>;
           created_at: string;
           created_by: string | null;
           employee_count: number;
@@ -643,9 +698,11 @@ export type Database = {
           total_gross: number;
           total_net: number;
           updated_at: string;
+          watermark: boolean;
         };
         Insert: {
           company_id: string;
+          company_snapshot?: NonNullable<Json>;
           created_at?: string;
           created_by?: string | null;
           employee_count?: number;
@@ -659,9 +716,11 @@ export type Database = {
           total_gross?: number;
           total_net?: number;
           updated_at?: string;
+          watermark?: boolean;
         };
         Update: {
           company_id?: string;
+          company_snapshot?: NonNullable<Json>;
           created_at?: string;
           created_by?: string | null;
           employee_count?: number;
@@ -675,6 +734,7 @@ export type Database = {
           total_gross?: number;
           total_net?: number;
           updated_at?: string;
+          watermark?: boolean;
         };
         Relationships: [
           {
@@ -695,6 +755,8 @@ export type Database = {
           company_id: string;
           created_at: string;
           employee_id: string;
+          employee_name: string | null;
+          employee_position: string | null;
           id: string;
           lines: NonNullable<Json>;
           net_pay: number;
@@ -714,6 +776,8 @@ export type Database = {
           company_id: string;
           created_at?: string;
           employee_id: string;
+          employee_name?: string | null;
+          employee_position?: string | null;
           id?: string;
           lines?: NonNullable<Json>;
           net_pay?: number;
@@ -733,6 +797,8 @@ export type Database = {
           company_id?: string;
           created_at?: string;
           employee_id?: string;
+          employee_name?: string | null;
+          employee_position?: string | null;
           id?: string;
           lines?: NonNullable<Json>;
           net_pay?: number;
@@ -1148,6 +1214,80 @@ export type Database = {
       reset_employee_pin: {
         Args: { p_employee_id: string };
         Returns: { token: string; expires_at: string; user_id: string }[];
+      };
+      update_payroll_settings: {
+        Args: { p_company_id: string; p_day_basis: string; p_fixed_days: number };
+        Returns: undefined;
+      };
+      set_base_salary: {
+        Args: { p_employee_id: string; p_amount: number; p_reason: string };
+        Returns: undefined;
+      };
+      save_payroll_rule: {
+        Args: {
+          p_company_id: string;
+          p_rule_id: string | null;
+          p_employee_id: string | null;
+          p_kind: string;
+          p_name: string;
+          p_calc: string;
+          p_amount: number | null;
+          p_trigger_event: string | null;
+          p_is_active: boolean;
+          p_reason: string | null;
+        };
+        Returns: string;
+      };
+      delete_payroll_rule: {
+        Args: { p_rule_id: string; p_reason: string };
+        Returns: undefined;
+      };
+      add_payroll_adjustment: {
+        Args: {
+          p_company_id: string;
+          p_employee_id: string;
+          p_period_start: string;
+          p_amount: number;
+          p_reason: string;
+        };
+        Returns: string;
+      };
+      delete_payroll_adjustment: {
+        Args: { p_adjustment_id: string };
+        Returns: undefined;
+      };
+      add_cash_advance: {
+        Args: {
+          p_company_id: string;
+          p_employee_id: string;
+          p_amount: number;
+          p_installment: number;
+          p_given_on: string;
+          p_note: string | null;
+        };
+        Returns: string;
+      };
+      cancel_cash_advance: {
+        Args: { p_cash_advance_id: string; p_reason: string };
+        Returns: undefined;
+      };
+      lock_payroll_run: {
+        Args: { p_company_id: string; p_period_start: string; p_slips: Json };
+        Returns: string;
+      };
+      mark_payslip_wa_sent: {
+        Args: { p_payslip_id: string };
+        Returns: undefined;
+      };
+      get_payslip_run: {
+        Args: { p_payslip_id: string };
+        Returns: {
+          period_start: string;
+          period_end: string;
+          locked_at: string;
+          company_snapshot: NonNullable<Json>;
+          watermark: boolean;
+        }[];
       };
       my_employee_ids: { Args: Record<PropertyKey, never>; Returns: string[] };
       plan_limit: {
