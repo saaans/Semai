@@ -20,6 +20,7 @@ import { JamKerjaForm } from "../_components/jam-kerja-form";
 import { LewatiForm } from "../_components/lewati-form";
 import { LokasiForm } from "../_components/lokasi-form";
 import { PaketForm } from "../_components/paket-form";
+import { IkonTumbuh } from "@/components/ikon-paket";
 import { ProfilForm } from "../_components/profil-form";
 import { StepHeader } from "../_components/step-header";
 import { UkuranForm } from "../_components/ukuran-form";
@@ -183,7 +184,7 @@ async function PaketStep({ data }: { data: OnboardingData }) {
   const supabase = await createClient();
   const { data: plans, error } = await supabase
     .from("plans")
-    .select("code, name, level, price_monthly, max_employees")
+    .select("code, tier, name, level, price_monthly, max_employees")
     .in("code", [...new Set([recommendation.code, paidCode, trialCode, "benih"])]);
   if (error) throw new Error("Gagal memuat daftar paket. Coba muat ulang halaman.");
 
@@ -209,7 +210,10 @@ async function PaketStep({ data }: { data: OnboardingData }) {
       description="Absen karyawan tetap jalan di paket apa pun. Paket hanya menentukan fitur untukmu."
     >
       <Card>
-        <Tag tone="accent">Rekomendasi</Tag>
+        <div className="flex items-start justify-between gap-3">
+          <Tag tone="accent">Rekomendasi</Tag>
+          <IkonTumbuh tier={recommended.tier} className="text-ink" />
+        </div>
         <CardTitle className="mt-3">{recommended.name}</CardTitle>
         <p className="mt-1 font-display text-2xl">{priceLabel(recommended)}</p>
         <CardDescription className="mt-2">{recommendation.reason}</CardDescription>

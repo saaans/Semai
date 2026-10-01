@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { FormAlert } from "@/app/(auth)/_components/form-alert";
+import { IkonTumbuh } from "@/components/ikon-paket";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Tag } from "@/components/ui/tag";
@@ -238,6 +239,7 @@ export default async function PaketPage({
           {benih && (
             <li className="flex">
               <PlanCard
+                tier="benih"
                 name="Benih"
                 range={rangeLabel(benih)}
                 note="Absen, rekap, dan gajian dasar"
@@ -257,6 +259,7 @@ export default async function PaketPage({
             return (
               <li key={plan.code} className="flex">
                 <PlanCard
+                  tier={plan.tier}
                   name={label}
                   range={range}
                   note={fits ? "Semua fitur" : `Karyawanmu ${overview.employeesUsed}, melebihi batas paket ini`}
@@ -378,6 +381,7 @@ function CycleToggle({ cycle }: { cycle: BillingCycle }) {
 
 /** Satu kartu paket di grid "Pilih paket". */
 function PlanCard({
+  tier,
   name,
   range,
   note,
@@ -386,6 +390,8 @@ function PlanCard({
   action,
   dimmed = false,
 }: {
+  /** benih, tunas, tumbuh, ... untuk ikon tahap tumbuh. */
+  tier: string;
   name: string;
   range: string;
   note: string;
@@ -397,11 +403,12 @@ function PlanCard({
   return (
     <Card className={cn("flex w-full flex-col gap-4", current && "outline-2 outline-ink", dimmed && "opacity-60")}>
       <div className="flex items-start justify-between gap-2">
-        <div>
-          <CardTitle>{name}</CardTitle>
-          <p className="text-sm text-smoke">{range}</p>
-        </div>
+        <IkonTumbuh tier={tier} className="text-ink" />
         {current && <Tag tone="ink">{current}</Tag>}
+      </div>
+      <div>
+        <CardTitle>{name}</CardTitle>
+        <p className="text-sm text-smoke">{range}</p>
       </div>
       {price}
       <p className="text-sm text-graphite">{note}</p>

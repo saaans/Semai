@@ -16,6 +16,10 @@
   --accent-soft: #d4ff8a; /* ujung atas gradien tombol utama */
   --on-accent: #0b0b0a; /* teks di atas lime */
   --danger: #b42318; /* pesan error */
+  --gold-soft: #f7e7b0; /* badge Premium: ujung terang gradien */
+  --gold: #dcae45; /* badge Premium: ujung gelap gradien */
+  --on-gold: #3a2905; /* teks di atas emas */
+  --sidebar: #ffffff; /* menu samping owner, sedikit lebih terang dari kanvas */
 
   color-scheme: light;
 }
@@ -33,6 +37,10 @@
     --accent-soft: #d4ff8a;
     --on-accent: #0b0b0a;
     --danger: #ff8a7a;
+    --gold-soft: #f2dd9a;
+    --gold: #c9972f;
+    --on-gold: #2b1e03;
+    --sidebar: #1b1a18;
 
     color-scheme: dark;
   }
@@ -50,6 +58,10 @@
   --color-accent-soft: var(--accent-soft);
   --color-on-accent: var(--on-accent);
   --color-danger: var(--danger);
+  --color-gold-soft: var(--gold-soft);
+  --color-gold: var(--gold);
+  --color-on-gold: var(--on-gold);
+  --color-sidebar: var(--sidebar);
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-onest), ui-sans-serif, system-ui, sans-serif;
@@ -82,5 +94,60 @@
   ::selection {
     background-color: var(--accent);
     color: var(--on-accent);
+  }
+}
+
+/*
+ * Satu-satunya animasi otomatis di landing: baris papan absen muncul satu per
+ * satu seperti karyawan yang baru absen. Mati kalau pengguna minta kurangi gerak.
+ */
+@keyframes absen-masuk {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes bar-isi {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .absen-masuk {
+    animation: absen-masuk 500ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+
+  .bar-isi {
+    transform-origin: left;
+    animation: bar-isi 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+}
+
+/* Bar tipis di atas layar saat pindah halaman atau memproses form. */
+@keyframes loader-jalan {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
+.loader-jalan {
+  animation: loader-jalan 1.1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loader-jalan {
+    animation-duration: 3s;
   }
 }

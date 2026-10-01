@@ -24,7 +24,7 @@ export function koreksiInitial(attendance: OwnerAttendance | null, timezone: str
 }
 
 /** 240 → "240 m", 44478 → "44,5 km". */
-function formatDistance(meters: number) {
+export function formatDistance(meters: number) {
   if (meters < 1000) return `${meters} m`;
   return `${(meters / 1000).toLocaleString("id-ID", { maximumFractionDigits: 1 })} km`;
 }
