@@ -1052,7 +1052,23 @@ export type Database = {
         Args: { p_company_id: string; p_choice: string; p_plan_code?: string };
         Returns: undefined;
       };
+      correct_attendance: {
+        Args: {
+          p_company_id: string;
+          p_employee_id: string;
+          p_work_date: string;
+          p_status: string;
+          p_clock_in: string | null;
+          p_clock_out: string | null;
+          p_reason: string;
+        };
+        Returns: Database["public"]["Tables"]["attendances"]["Row"][];
+      };
       current_plan_code: { Args: { p_company_id: string }; Returns: string };
+      decide_overtime: {
+        Args: { p_attendance_id: string; p_approve: boolean };
+        Returns: Database["public"]["Tables"]["attendances"]["Row"][];
+      };
       employee_auth_account: {
         Args: { p_phone: string };
         Returns: { user_id: string; pin_reset: boolean }[];

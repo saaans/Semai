@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Card } from "@/components/ui/card";
 import { Tag } from "@/components/ui/tag";
 import { getHistoryMonth, type HistoryDay } from "@/lib/attendance/history";
+import { dayLabel, monthLabel } from "@/lib/attendance/recap";
 import { requireEmployee } from "@/lib/auth/session";
 import { formatMinutes, formatTime } from "@/lib/format";
 import { EmployeeNav } from "../_components/employee-nav";
@@ -16,21 +17,6 @@ const STATUS_LABEL: Record<string, string> = {
   alpa: "Tidak masuk",
   libur: "Libur",
 };
-
-function monthLabel(month: string) {
-  return new Intl.DateTimeFormat("id-ID", { month: "long", year: "numeric", timeZone: "UTC" }).format(
-    new Date(`${month}-01T00:00:00Z`),
-  );
-}
-
-function dayLabel(date: string) {
-  return new Intl.DateTimeFormat("id-ID", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    timeZone: "UTC",
-  }).format(new Date(`${date}T00:00:00Z`));
-}
 
 export default async function RiwayatPage({
   searchParams,
@@ -139,8 +125,8 @@ function DayRow({ day, timezone }: { day: HistoryDay; timezone: string }) {
       notes.push(`Lembur ${formatMinutes(day.overtimeMinutes)} (${status})`);
     }
     if (day.offline) notes.push("Dikirim saat offline");
-    if (day.corrected) notes.push("Dikoreksi owner");
   }
+  const correctionReason = day.kind === "tidak_masuk" ? null : day.correctionReason;
 
   return (
     <li className="flex items-start justify-between gap-3 py-3">
@@ -154,6 +140,9 @@ function DayRow({ day, timezone }: { day: HistoryDay; timezone: string }) {
           </span>
         )}
         {notes.length > 0 && <span className="text-xs text-smoke">{notes.join(" · ")}</span>}
+        {correctionReason && (
+          <span className="text-xs text-smoke">Dikoreksi owner: {correctionReason}</span>
+        )}
       </div>
       {day.kind === "hadir" && (
         <Tag tone={day.lateMinutes > 0 ? "outline" : "neutral"}>
