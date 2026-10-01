@@ -27,6 +27,7 @@ import { KirimWaButton } from "./_components/kirim-wa";
 import { KunciGajianButton } from "./_components/kunci-gajian";
 import { OwnerOnlyCard } from "./_components/owner-only";
 import { HapusPenyesuaianButton, PenyesuaianButton } from "./_components/penyesuaian";
+import { RincianToggle } from "./_components/rincian-toggle";
 
 export const metadata: Metadata = { title: "Gajian" };
 
@@ -155,62 +156,47 @@ function PreviewView({ preview, month, monthLabel: label }: { preview: PayrollPr
         </Card>
       )}
 
-      <ul className="flex flex-col gap-3">
-        {preview.employees.map((e) => {
-          const a = e.attendance;
-          const facts = [
-            `${a.hadir} hadir`,
-            a.telatKali > 0 ? `telat ${a.telatKali}× (${formatMinutes(a.telatMenit)})` : null,
-            a.pulangCepatKali > 0 ? `pulang cepat ${a.pulangCepatKali}×` : null,
-            a.alpa > 0 ? `${a.alpa} tidak masuk` : null,
-            a.izin > 0 ? `${a.izin} izin/sakit` : null,
-            a.lemburMenit > 0 ? `lembur ${formatMinutes(a.lemburMenit)}` : null,
-          ].filter(Boolean);
-          return (
-            <li key={e.employeeId}>
-              <Card className="p-4 sm:p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex min-w-0 flex-col">
-                    <span className="font-medium text-ink">
-                      {e.name}
-                      {!e.active && <span className="ml-2 text-xs font-normal text-ash">Nonaktif</span>}
-                    </span>
-                    <span className="text-xs text-smoke">{facts.join(" · ")}</span>
-                  </div>
-                  <span className="shrink-0 font-mono text-lg text-ink">{formatRupiah(e.result.netPay)}</span>
-                </div>
-                {e.result.negative && (
-                  <p className="mt-2 text-sm text-danger">Penyesuaian minus lebih besar dari gaji. Hapus atau kecilkan penyesuaiannya.</p>
-                )}
-                <details className="group mt-2">
-                  <summary className="flex min-h-11 cursor-pointer items-center text-sm text-graphite underline underline-offset-4">
-                    Lihat rincian
-                  </summary>
-                  <div className="mt-2 rounded-button bg-canvas p-4">
+      <Card className="p-0 sm:p-0">
+        <ul className="flex flex-col divide-y divide-stone">
+          {preview.employees.map((e) => {
+            const a = e.attendance;
+            const facts = [
+              `${a.hadir} hadir`,
+              a.telatKali > 0 ? `telat ${a.telatKali}× (${formatMinutes(a.telatMenit)})` : null,
+              a.pulangCepatKali > 0 ? `pulang cepat ${a.pulangCepatKali}×` : null,
+              a.alpa > 0 ? `${a.alpa} tidak masuk` : null,
+              a.izin > 0 ? `${a.izin} izin/sakit` : null,
+              a.lemburMenit > 0 ? `lembur ${formatMinutes(a.lemburMenit)}` : null,
+            ].filter(Boolean);
+            return (
+              <li key={e.employeeId} className="flex flex-col gap-1 px-4 py-4 sm:px-6">
+                <GajiRowHead name={e.name} sub={facts.join(" · ")} inactive={!e.active} netPay={e.result.netPay} />
+                <div className="pl-[3.25rem]">
+                  {e.result.negative && (
+                    <p className="mt-1 text-sm text-danger">Penyesuaian minus lebih besar dari gaji. Hapus atau kecilkan penyesuaiannya.</p>
+                  )}
+                  {e.adjustments.length > 0 && (
+                    <ul className="mt-1 flex flex-col">
+                      {e.adjustments.map((adj) => (
+                        <li key={adj.id} className="flex items-center justify-between gap-2 text-xs text-smoke">
+                          <span className="min-w-0">
+                            Penyesuaian {adj.amount > 0 ? "+" : "−"}
+                            {formatRupiah(Math.abs(adj.amount))}: {adj.reason}
+                          </span>
+                          <HapusPenyesuaianButton adjustmentId={adj.id} />
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <RincianToggle actions={<PenyesuaianButton employeeId={e.employeeId} employeeName={e.name} month={month} />}>
                     <PayslipLines lines={e.result.lines} netPay={e.result.netPay} />
-                  </div>
-                </details>
-                {e.adjustments.length > 0 && (
-                  <ul className="mt-2 flex flex-col gap-1">
-                    {e.adjustments.map((adj) => (
-                      <li key={adj.id} className="flex items-center justify-between gap-2 text-xs text-smoke">
-                        <span className="min-w-0">
-                          Penyesuaian {adj.amount > 0 ? "+" : "−"}
-                          {formatRupiah(Math.abs(adj.amount))}: {adj.reason}
-                        </span>
-                        <HapusPenyesuaianButton adjustmentId={adj.id} />
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <div className="mt-1 flex flex-wrap items-center gap-2">
-                  <PenyesuaianButton employeeId={e.employeeId} employeeName={e.name} month={month} />
+                  </RincianToggle>
                 </div>
-              </Card>
-            </li>
-          );
-        })}
-      </ul>
+              </li>
+            );
+          })}
+        </ul>
+      </Card>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         {negative.length === 0 ? (
@@ -279,49 +265,59 @@ async function LockedView({
         ]}
       />
 
-      <ul className="flex flex-col gap-3">
-        {run.payslips.map((slip) => {
-          const message = `Halo ${slip.name}, slip gaji ${label} dari ${companyName} sudah bisa dilihat di sini: ${site}/app/slip/${slip.id}`;
-          const waHref = slip.phone
-            ? `https://wa.me/${slip.phone}?text=${encodeURIComponent(message)}`
-            : `https://wa.me/?text=${encodeURIComponent(message)}`;
-          return (
-            <li key={slip.id}>
-              <Card className="p-4 sm:p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex min-w-0 flex-col">
-                    <span className="font-medium text-ink">{slip.name}</span>
-                    {slip.position && <span className="text-xs text-smoke">{slip.position}</span>}
-                  </div>
-                  <span className="shrink-0 font-mono text-lg text-ink">{formatRupiah(slip.netPay)}</span>
-                </div>
-                <details className="mt-2">
-                  <summary className="flex min-h-11 cursor-pointer items-center text-sm text-graphite underline underline-offset-4">
-                    Lihat rincian
-                  </summary>
-                  <div className="mt-2 rounded-button bg-canvas p-4">
-                    <PayslipLines lines={slip.lines} netPay={slip.netPay} />
-                  </div>
-                </details>
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <a
-                    href={`/owner/gaji/slip/${slip.id}`}
-                    className="inline-flex min-h-11 items-center rounded-button border border-stone px-4 text-sm text-ink hover:border-graphite hover:bg-taupe"
+      <Card className="p-0 sm:p-0">
+        <ul className="flex flex-col divide-y divide-stone">
+          {run.payslips.map((slip) => {
+            const message = `Halo ${slip.name}, slip gaji ${label} dari ${companyName} sudah bisa dilihat di sini: ${site}/app/slip/${slip.id}`;
+            const waHref = slip.phone
+              ? `https://wa.me/${slip.phone}?text=${encodeURIComponent(message)}`
+              : `https://wa.me/?text=${encodeURIComponent(message)}`;
+            return (
+              <li key={slip.id} className="flex flex-col gap-1 px-4 py-4 sm:px-6">
+                <GajiRowHead name={slip.name} sub={slip.position ?? ""} netPay={slip.netPay} />
+                <div className="pl-[3.25rem]">
+                  <RincianToggle
+                    actions={
+                      <>
+                        <a href={`/owner/gaji/slip/${slip.id}`} className="flex min-h-11 items-center text-sm text-graphite underline underline-offset-4 hover:text-ink">
+                          Unduh slip
+                        </a>
+                        <KirimWaButton
+                          payslipId={slip.id}
+                          href={waHref}
+                          sentLabel={slip.waSentAt ? `Terkirim ${formatDate(slip.waSentAt, timezone)}` : null}
+                        />
+                      </>
+                    }
                   >
-                    Unduh slip
-                  </a>
-                  <KirimWaButton
-                    payslipId={slip.id}
-                    href={waHref}
-                    sentLabel={slip.waSentAt ? `Terkirim ${formatDate(slip.waSentAt, timezone)}` : null}
-                  />
+                    <PayslipLines lines={slip.lines} netPay={slip.netPay} />
+                  </RincianToggle>
                 </div>
-              </Card>
-            </li>
-          );
-        })}
-      </ul>
+              </li>
+            );
+          })}
+        </ul>
+      </Card>
     </>
+  );
+}
+
+/** Kepala baris gajian: huruf awal, nama, keterangan, dan total dibayar. */
+function GajiRowHead({ name, sub, netPay, inactive = false }: { name: string; sub: string; netPay: number; inactive?: boolean }) {
+  return (
+    <div className="flex items-center gap-3">
+      <span aria-hidden className="flex size-10 shrink-0 items-center justify-center rounded-full border border-stone bg-canvas text-sm font-medium text-graphite">
+        {name.trim().charAt(0).toUpperCase() || "?"}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-medium text-ink">
+          {name}
+          {inactive && <span className="ml-2 text-xs font-normal text-ash">Nonaktif</span>}
+        </p>
+        {sub && <p className="truncate text-sm text-smoke">{sub}</p>}
+      </div>
+      <p className="shrink-0 text-right text-base font-medium text-ink tabular-nums sm:text-lg">{formatRupiah(netPay)}</p>
+    </div>
   );
 }
 

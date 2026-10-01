@@ -36,8 +36,8 @@ export function ChoiceGroup({
           <label
             key={option.value}
             className={cn(
-              "flex min-h-11 cursor-pointer flex-col justify-center rounded-button border border-stone bg-canvas px-3.5 py-2.5 text-sm text-ink transition-colors hover:border-ash",
-              "has-checked:border-ink has-checked:bg-ink has-checked:text-canvas",
+              "group relative flex min-h-11 cursor-pointer flex-col justify-center rounded-button border border-stone bg-canvas py-2.5 pr-9 pl-3.5 text-sm text-ink transition-colors hover:border-ash",
+              "has-checked:border-graphite has-checked:bg-taupe",
               "has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ink",
               error && "border-danger",
             )}
@@ -52,7 +52,12 @@ export function ChoiceGroup({
                 : { defaultChecked: defaultValue === option.value })}
             />
             <span className="font-medium">{option.label}</span>
-            {option.hint && <span className="text-xs opacity-70">{option.hint}</span>}
+            {option.hint && <span className="text-xs text-smoke">{option.hint}</span>}
+            {/* Penanda radio: lingkaran kosong, terisi saat dipilih. */}
+            <span
+              aria-hidden
+              className="absolute top-1/2 right-3 size-4 -translate-y-1/2 rounded-full border border-ash transition-[border-width,border-color] group-has-checked:border-[5px] group-has-checked:border-ink"
+            />
           </label>
         ))}
       </div>
