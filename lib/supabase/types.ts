@@ -273,6 +273,7 @@ export type Database = {
           name: string | null;
           onboarding: NonNullable<Json>;
           onboarding_completed_at: string | null;
+          over_limit_since: string | null;
           payroll_day_basis: string;
           payroll_fixed_days: number;
           phone: string | null;
@@ -296,6 +297,7 @@ export type Database = {
           name?: string | null;
           onboarding?: NonNullable<Json>;
           onboarding_completed_at?: string | null;
+          over_limit_since?: string | null;
           payroll_day_basis?: string;
           payroll_fixed_days?: number;
           phone?: string | null;
@@ -319,6 +321,7 @@ export type Database = {
           name?: string | null;
           onboarding?: NonNullable<Json>;
           onboarding_completed_at?: string | null;
+          over_limit_since?: string | null;
           payroll_day_basis?: string;
           payroll_fixed_days?: number;
           phone?: string | null;
@@ -390,6 +393,7 @@ export type Database = {
           invite_expires_at: string | null;
           invite_token_hash: string | null;
           is_remote: boolean;
+          hidden_by_plan_at: string | null;
           joined_on: string | null;
           location_id: string | null;
           phone: string;
@@ -410,6 +414,7 @@ export type Database = {
           invite_expires_at?: string | null;
           invite_token_hash?: string | null;
           is_remote?: boolean;
+          hidden_by_plan_at?: string | null;
           joined_on?: string | null;
           location_id?: string | null;
           phone: string;
@@ -430,6 +435,7 @@ export type Database = {
           invite_expires_at?: string | null;
           invite_token_hash?: string | null;
           is_remote?: boolean;
+          hidden_by_plan_at?: string | null;
           joined_on?: string | null;
           location_id?: string | null;
           phone?: string;
@@ -935,6 +941,7 @@ export type Database = {
           created_at: string;
           current_period_end: string | null;
           current_period_start: string | null;
+          ended_at: string | null;
           id: string;
           plan_code: string;
           price_override: number | null;
@@ -951,6 +958,7 @@ export type Database = {
           created_at?: string;
           current_period_end?: string | null;
           current_period_start?: string | null;
+          ended_at?: string | null;
           id?: string;
           plan_code: string;
           price_override?: number | null;
@@ -967,6 +975,7 @@ export type Database = {
           created_at?: string;
           current_period_end?: string | null;
           current_period_start?: string | null;
+          ended_at?: string | null;
           id?: string;
           plan_code?: string;
           price_override?: number | null;
@@ -1147,6 +1156,7 @@ export type Database = {
         Args: { p_attendance_id: string; p_approve: boolean };
         Returns: Database["public"]["Tables"]["attendances"]["Row"][];
       };
+      downgrade_to_benih: { Args: { p_company_id: string }; Returns: undefined };
       employee_auth_account: {
         Args: { p_phone: string };
         Returns: { user_id: string; pin_reset: boolean }[];
@@ -1156,6 +1166,24 @@ export type Database = {
       employee_login_locked_until: { Args: { p_phone: string }; Returns: string | null };
       employee_login_succeeded: { Args: { p_phone: string }; Returns: undefined };
       ensure_owner_company: { Args: Record<PropertyKey, never>; Returns: string };
+      get_billing_overview: {
+        Args: { p_company_id: string };
+        Returns: {
+          plan_code: string;
+          plan_name: string;
+          level: string;
+          subscription_status: string | null;
+          billing_cycle: string | null;
+          billing_state: string;
+          trial_ends_at: string | null;
+          current_period_end: string | null;
+          trial_used: boolean;
+          employees_used: number;
+          employee_limit: number | null;
+          hidden_count: number;
+          over_limit_since: string | null;
+        }[];
+      };
       get_invitation: {
         Args: { p_token: string };
         Returns: {
@@ -1210,6 +1238,8 @@ export type Database = {
         };
         Returns: Database["public"]["Tables"]["companies"]["Row"][];
       };
+      start_trial_plus: { Args: { p_company_id: string }; Returns: string };
+      sync_plan_state: { Args: { p_company_id: string }; Returns: undefined };
       remote_attendance_status: {
         Args: { p_company_id: string };
         Returns: { allowed: boolean; grace_until: string | null }[];

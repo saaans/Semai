@@ -5,10 +5,11 @@ import { ButtonLink } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { formatPhone } from "@/lib/auth/schemas";
 import { requireOwner } from "@/lib/auth/session";
-import { getEmployeeQuota } from "@/lib/employees/quota";
+import { getBillingOverview } from "@/lib/billing/server";
+import { quotaStatus } from "@/lib/billing/state";
 import { createClient } from "@/lib/supabase/server";
+import { QuotaNotice } from "../_components/quota-notice";
 import { StatusTag } from "./_components/status-tag";
-import { UpgradeCard } from "./_components/upgrade-card";
 
 export const metadata: Metadata = { title: "Karyawan" };
 
@@ -19,15 +20,19 @@ export default async function KaryawanPage() {
   if (!owner.onboardingCompleted) redirect("/owner/onboarding");
 
   const supabase = await createClient();
-  const [{ data: employees, error }, quota] = await Promise.all([
+  const [{ data: employees, error }, overview, { data: company }] = await Promise.all([
     supabase
       .from("employees")
       .select("id, full_name, phone, position, status")
       .eq("company_id", owner.companyId)
       .order("full_name"),
-    getEmployeeQuota(owner.companyId),
+    getBillingOverview(owner.companyId),
+    supabase.from("companies").select("timezone").eq("id", owner.companyId).maybeSingle(),
   ]);
   if (error) throw new Error("Gagal memuat daftar karyawan. Coba muat ulang halaman.");
+
+  const quota = quotaStatus(overview.employeesUsed, overview.employeeLimit);
+  const full = quota !== null && quota.remaining === 0;
 
   const sorted = [...employees].sort(
     (a, b) => (STATUS_ORDER[a.status] ?? 9) - (STATUS_ORDER[b.status] ?? 9),
@@ -39,19 +44,19 @@ export default async function KaryawanPage() {
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl sm:text-4xl">Karyawan</h1>
           <p className="text-smoke">
-            <span className="font-mono text-ink">{quota.used}</span>
-            {quota.limit !== null && (
+            <span className="font-mono text-ink">{overview.employeesUsed}</span>
+            {overview.employeeLimit !== null && (
               <>
-                {" "}dari <span className="font-mono">{quota.limit}</span>
+                {" "}dari <span className="font-mono">{overview.employeeLimit}</span>
               </>
             )}{" "}
-            karyawan terpakai · paket {quota.planName}
+            karyawan terpakai · paket {overview.planName}
           </p>
         </div>
-        {!quota.full && <ButtonLink href="/owner/karyawan/tambah">Tambah karyawan</ButtonLink>}
+        {!full && <ButtonLink href="/owner/karyawan/tambah">Tambah karyawan</ButtonLink>}
       </div>
 
-      {quota.full && <UpgradeCard planName={quota.planName} limit={quota.limit} />}
+      <QuotaNotice overview={overview} timezone={company?.timezone ?? "Asia/Jakarta"} />
 
       {sorted.length === 0 ? (
         <Card>

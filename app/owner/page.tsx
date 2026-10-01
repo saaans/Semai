@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
@@ -7,6 +8,8 @@ import { Tag } from "@/components/ui/tag";
 import { getTodayBoard, type TodayEntry } from "@/lib/attendance/owner";
 import { dayLabel } from "@/lib/attendance/recap";
 import { requireOwner } from "@/lib/auth/session";
+import { getBillingOverview } from "@/lib/billing/server";
+import { QUOTA_DISMISS_COOKIE } from "@/lib/billing/state";
 import { getRemoteStatus } from "@/lib/employees/remote";
 import { formatDate, formatMinutes, formatTime, timezoneLabel } from "@/lib/format";
 import { parseProgress } from "@/lib/onboarding/data";
@@ -15,6 +18,8 @@ import { AbsenInfo, koreksiInitial, STATUS_LABEL } from "./_components/absen-inf
 import { AutoRefresh } from "./_components/auto-refresh";
 import { KoreksiButton } from "./_components/koreksi-button";
 import { LemburActions } from "./_components/lembur-actions";
+import { QuotaNotice } from "./_components/quota-notice";
+import { TutupKuotaButton } from "./paket/paket-forms";
 
 export const metadata: Metadata = { title: "Hari ini" };
 
@@ -22,11 +27,14 @@ export default async function OwnerPage() {
   const owner = await requireOwner();
   if (!owner.onboardingCompleted) redirect("/owner/onboarding");
 
-  const [board, pendingPlan, remote] = await Promise.all([
+  const [board, pendingPlan, remote, overview, cookieStore] = await Promise.all([
     getTodayBoard(owner.companyId),
     getPendingPaidPlan(owner.companyId),
     getRemoteStatus(owner.companyId),
+    getBillingOverview(owner.companyId),
+    cookies(),
   ]);
+  const quotaDismissed = cookieStore.get(QUOTA_DISMISS_COOKIE)?.value === "1";
   const remoteCount = board.entries.filter((e) => e.isRemote).length;
   const tz = board.timezone;
 
@@ -97,6 +105,8 @@ export default async function OwnerPage() {
           </CardDescription>
         </Card>
       )}
+
+      {!quotaDismissed && <QuotaNotice overview={overview} timezone={tz} dismiss={<TutupKuotaButton />} />}
 
       {pendingPlan && (
         <Card>

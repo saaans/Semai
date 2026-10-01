@@ -208,6 +208,13 @@ Owner langsung masuk onboarding setelah daftar. Satu layar satu topik, progress 
 | Koreksi absen | Wajib alasan, nilai sebelum/sesudah tercatat, terlihat karyawan |
 | Gajian dikunci | Slip terkirim tidak bisa diubah. Perubahan jadi penyesuaian periode berikutnya |
 
+**Keputusan Langkah 8 (paket dan langganan)**
+
+- Karyawan di atas batas paket (setelah trial habis atau turun paket): tenggang 14 hari sejak usaha melewati batas, lalu karyawan aktif + diundang yang paling baru ditambahkan disembunyikan dari owner (daftar, rekap, gajian). Tidak dihapus, tetap bisa absen, dan muncul lagi setelah upgrade atau setelah karyawan lain dinonaktifkan. Lewat 90 hari tetap disimpan; penghapusan diputuskan belakangan.
+- Menambah karyawan saat kuota penuh langsung ditolak dan diarahkan ke halaman Paket (tidak ada tenggang untuk penambahan).
+- Upgrade di tengah periode: sisa nilai paket lama dipotong prorata dari tagihan baru, periode baru mulai saat bayar. Turun paket berlaku di periode berikutnya.
+- Mode baca saja (tagihan lewat 7 hari): owner boleh keluar dengan pindah ke Benih tanpa melunasi; data di atas batas Benih mengikuti aturan karyawan di atas.
+
 ## 11. Non-fungsional
 
 **Keamanan & privasi**
