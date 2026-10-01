@@ -62,9 +62,16 @@ const FEATURE_MENU: FeatureKey[] = [
   "admin_tambahan",
 ];
 
+/** Halaman fitur yang sudah dibuat. */
+const FEATURE_PAGE: Partial<Record<FeatureKey, string>> = {
+  kasbon: "/owner/kasbon",
+};
+
 function featureItem(plan: CompanyPlan, key: FeatureKey): MenuItem {
   const label = FEATURE_INFO[key]?.label ?? key;
   if (hasFeature(plan, key)) {
+    const page = FEATURE_PAGE[key];
+    if (page) return { label, href: page, state: "aktif" };
     // Fitur termasuk paket tapi halamannya belum dibuat.
     return { label, href: `/owner/fitur/${key}`, state: "segera" };
   }
@@ -83,7 +90,7 @@ export function buildOwnerMenu(plan: CompanyPlan): MenuItem[][] {
       { label: "Hari ini", href: "/owner", state: "aktif" },
       { label: "Rekap absen", href: "/owner/absen", state: "aktif" },
       { label: "Karyawan", href: "/owner/karyawan", state: "aktif" },
-      { label: "Gajian", href: "/owner/gaji", state: "segera" },
+      { label: "Gajian", href: "/owner/gaji", state: "aktif" },
     ],
     FEATURE_MENU.map((key) => featureItem(plan, key)),
     [
