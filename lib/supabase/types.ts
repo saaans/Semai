@@ -1279,6 +1279,10 @@ export type Database = {
         Args: { p_payslip_id: string };
         Returns: undefined;
       };
+      list_my_payslips: {
+        Args: { p_company_id: string };
+        Returns: { id: string; period_start: string; period_end: string; net_pay: number; locked_at: string }[];
+      };
       get_payslip_run: {
         Args: { p_payslip_id: string };
         Returns: {

@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Card } from "@/components/ui/card";
-import { getSessionUser, isEmployeeEmail } from "@/lib/auth/session";
+import { getSessionUser, isEmployeeEmail, safeNextPath } from "@/lib/auth/session";
 import { EmployeeShell } from "../_components/employee-shell";
 import { MasukKaryawanForm } from "./masuk-form";
 
 export const metadata: Metadata = { title: "Masuk karyawan" };
 
-export default async function MasukKaryawanPage() {
+export default async function MasukKaryawanPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+  const { next } = await searchParams;
+  const nextPath = safeNextPath(next)?.startsWith("/app/") ? next : undefined;
   const user = await getSessionUser();
-  if (user && isEmployeeEmail(user.email)) redirect("/app");
+  if (user && isEmployeeEmail(user.email)) redirect(nextPath ?? "/app");
 
   return (
     <EmployeeShell>
@@ -18,7 +20,7 @@ export default async function MasukKaryawanPage() {
         <p className="text-smoke">Pakai nomor HP yang didaftarkan pemilik usaha dan PIN kamu.</p>
       </div>
       <Card>
-        <MasukKaryawanForm />
+        <MasukKaryawanForm next={nextPath} />
       </Card>
     </EmployeeShell>
   );

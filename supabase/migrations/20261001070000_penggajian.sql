@@ -834,6 +834,30 @@ as $$
 $$;
 
 
+-- Slip terkunci milik karyawan yang login, terbaru dulu (untuk /app/slip).
+create or replace function public.list_my_payslips(p_company_id uuid)
+returns table (
+  id            uuid,
+  period_start  date,
+  period_end    date,
+  net_pay       bigint,
+  locked_at     timestamptz
+)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select s.id, r.period_start, r.period_end, s.net_pay, r.locked_at
+  from public.payslips s
+  join public.payroll_runs r on r.id = s.payroll_run_id
+  where s.company_id = p_company_id
+    and r.status = 'dikunci'
+    and s.employee_id in (select public.my_employee_ids())
+  order by r.period_start desc;
+$$;
+
+
 -- -----------------------------------------------------------------------------
 -- Hak akses fungsi
 -- -----------------------------------------------------------------------------
@@ -853,7 +877,8 @@ revoke execute on function
   public.cancel_cash_advance(uuid, text),
   public.lock_payroll_run(uuid, date, jsonb),
   public.mark_payslip_wa_sent(uuid),
-  public.get_payslip_run(uuid)
+  public.get_payslip_run(uuid),
+  public.list_my_payslips(uuid)
 from public, anon, authenticated;
 
 grant execute on function
@@ -867,5 +892,6 @@ grant execute on function
   public.cancel_cash_advance(uuid, text),
   public.lock_payroll_run(uuid, date, jsonb),
   public.mark_payslip_wa_sent(uuid),
-  public.get_payslip_run(uuid)
+  public.get_payslip_run(uuid),
+  public.list_my_payslips(uuid)
 to authenticated;
