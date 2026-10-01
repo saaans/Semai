@@ -18,6 +18,17 @@ export default function DaftarPage() {
         <GoogleButton label="Daftar dengan Google" />
         <OrDivider />
         <DaftarForm />
+        <p className="text-xs leading-relaxed text-smoke">
+          Dengan mendaftar kamu setuju dengan{" "}
+          <Link href="/syarat" className="text-ink underline underline-offset-4">
+            Syarat &amp; Ketentuan
+          </Link>{" "}
+          dan{" "}
+          <Link href="/privasi" className="text-ink underline underline-offset-4">
+            Kebijakan Privasi
+          </Link>{" "}
+          Semai.
+        </p>
       </Card>
       <p className="text-sm text-smoke">
         Sudah punya akun?{" "}
