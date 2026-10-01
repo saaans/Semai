@@ -11,6 +11,8 @@
 --   menunggu persetujuan owner (overtime_status).
 -- - Owner memilih mode absen per usaha: masuk saja, atau masuk dan pulang.
 -- - Status langganan TIDAK dicek di sini: absen tidak pernah diblokir.
+-- - Aman dijalankan ulang (if not exists / or replace), misalnya kalau
+--   sebagian sempat jalan di SQL Editor.
 -- - Foto di bucket privat absen-foto, path {company_id}/{employee_id}/...
 --   Upload lewat server (service role); RPC memastikan file sudah ada.
 -- =============================================================================
@@ -21,11 +23,10 @@
 -- -----------------------------------------------------------------------------
 
 alter table public.companies
-  add column attendance_mode text not null default 'masuk_pulang'
+  add column if not exists attendance_mode text not null default 'masuk_pulang'
     check (attendance_mode in ('masuk', 'masuk_pulang'));
 
-comment on column public.companies.attendance_mode is
-  'masuk = karyawan cukup absen masuk. masuk_pulang = absen masuk dan pulang (selfie + radius).';
+comment on column public.companies.attendance_mode is 'masuk = karyawan cukup absen masuk. masuk_pulang = absen masuk dan pulang (selfie + radius).';
 
 grant update (attendance_mode) on public.companies to authenticated;
 
@@ -35,31 +36,30 @@ grant update (attendance_mode) on public.companies to authenticated;
 -- -----------------------------------------------------------------------------
 
 alter table public.attendances
-  add column clock_in_request_id   uuid unique,
-  add column clock_out_request_id  uuid unique,
-  add column clock_in_offline      boolean not null default false,
-  add column clock_out_offline     boolean not null default false,
-  add column overtime_status       text check (overtime_status in ('menunggu', 'disetujui', 'ditolak')),
-  add column overtime_decided_at   timestamptz,
-  add column overtime_decided_by   uuid references auth.users (id) on delete set null,
-  add constraint attendances_overtime_needs_status
-    check (overtime_minutes = 0 or overtime_status is not null);
+  add column if not exists clock_in_request_id   uuid unique,
+  add column if not exists clock_out_request_id  uuid unique,
+  add column if not exists clock_in_offline      boolean not null default false,
+  add column if not exists clock_out_offline     boolean not null default false,
+  add column if not exists overtime_status       text check (overtime_status in ('menunggu', 'disetujui', 'ditolak')),
+  add column if not exists overtime_decided_at   timestamptz,
+  add column if not exists overtime_decided_by   uuid references auth.users (id) on delete set null;
 
-comment on column public.attendances.clock_in_request_id is
-  'ID unik dari HP. Antrean offline yang terkirim dua kali tidak membuat absen ganda.';
-comment on column public.attendances.clock_in_offline is
-  'Absen disimpan di HP saat offline lalu dikirim belakangan. Jam resmi tetap jam terkirim.';
-comment on column public.attendances.overtime_status is
-  'Lembur menunggu persetujuan owner. Hanya lembur disetujui yang masuk gajian.';
+alter table public.attendances drop constraint if exists attendances_overtime_needs_status;
+alter table public.attendances add constraint attendances_overtime_needs_status
+  check (overtime_minutes = 0 or overtime_status is not null);
 
-create index attendances_employee_date_idx on public.attendances (employee_id, work_date desc);
+comment on column public.attendances.clock_in_request_id is 'ID unik dari HP. Antrean offline yang terkirim dua kali tidak membuat absen ganda.';
+comment on column public.attendances.clock_in_offline is 'Absen disimpan di HP saat offline lalu dikirim belakangan. Jam resmi tetap jam terkirim.';
+comment on column public.attendances.overtime_status is 'Lembur menunggu persetujuan owner. Hanya lembur disetujui yang masuk gajian.';
+
+create index if not exists attendances_employee_date_idx on public.attendances (employee_id, work_date desc);
 
 
 -- -----------------------------------------------------------------------------
 -- Jarak (haversine), dalam meter
 -- -----------------------------------------------------------------------------
 
-create function public.distance_m(
+create or replace function public.distance_m(
   p_lat1 double precision,
   p_lng1 double precision,
   p_lat2 double precision,
@@ -91,7 +91,7 @@ on conflict (id) do update
       allowed_mime_types = excluded.allowed_mime_types;
 
 -- Segmen pertama path = company_id. Path yang bukan uuid tidak cocok (bukan error).
-create function public.storage_company_id(p_name text)
+create or replace function public.storage_company_id(p_name text)
 returns uuid
 language plpgsql
 immutable
@@ -107,6 +107,7 @@ $$;
 -- Owner/admin bisa membaca foto usahanya (untuk signed URL di dashboard).
 -- Tidak ada policy insert/update/delete: upload hanya lewat server (service role).
 -- Super admin tidak punya policy di sini (aturan data no. 9).
+drop policy if exists "Anggota melihat foto absen usahanya" on storage.objects;
 create policy "Anggota melihat foto absen usahanya" on storage.objects
   for select to authenticated
   using (
@@ -121,7 +122,7 @@ create policy "Anggota melihat foto absen usahanya" on storage.objects
 
 -- Data karyawan aktif milik user ini di usaha tertentu, plus lokasi & jadwal.
 -- Hanya dipakai clock_in / clock_out.
-create function public.attendance_context(p_company_id uuid)
+create or replace function public.attendance_context(p_company_id uuid)
 returns table (
   employee_id      uuid,
   timezone         text,
@@ -156,7 +157,7 @@ as $$
 $$;
 
 -- Validasi bersama: lokasi, radius, dan foto. Mengembalikan jarak (meter).
-create function public.check_attendance_position(
+create or replace function public.check_attendance_position(
   p_company_id     uuid,
   p_employee_id    uuid,
   p_location_id    uuid,
@@ -207,7 +208,7 @@ begin
 end;
 $$;
 
-create function public.clock_in(
+create or replace function public.clock_in(
   p_company_id          uuid,
   p_lat                 double precision,
   p_lng                 double precision,
@@ -321,7 +322,7 @@ begin
 end;
 $$;
 
-create function public.clock_out(
+create or replace function public.clock_out(
   p_company_id          uuid,
   p_lat                 double precision,
   p_lng                 double precision,
