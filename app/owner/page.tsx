@@ -113,9 +113,14 @@ export default async function OwnerPage() {
           <Tag tone="outline">Menunggu pembayaran</Tag>
           <CardTitle className="mt-3">Selesaikan pembayaran {pendingPlan}</CardTitle>
           <CardDescription>
-            Pembayaran online segera tersedia. Sementara itu usahamu memakai paket Benih, dan absen
-            karyawan tetap jalan seperti biasa.
+            Bayar lewat virtual account bank atau QRIS di halaman Paket. Sampai pembayaran diterima,
+            usahamu memakai paket Benih, dan absen karyawan tetap jalan seperti biasa.
           </CardDescription>
+          <div className="mt-4">
+            <ButtonLink href="/owner/paket" variant="secondary">
+              Bayar di halaman Paket
+            </ButtonLink>
+          </div>
         </Card>
       )}
 

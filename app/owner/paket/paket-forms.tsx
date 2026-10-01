@@ -4,20 +4,29 @@ import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { FormAlert } from "@/app/(auth)/_components/form-alert";
 import { Button } from "@/components/ui/button";
-import { mulaiTrialPlus, tutupKartuKuota, turunKeBenih, type PaketState } from "./actions";
+import { bayarPaket, mulaiTrialPlus, tutupKartuKuota, turunKeBenih, type PaketState } from "./actions";
 
 function PendingButton({
   children,
   pendingText,
   variant = "primary",
+  fullWidth,
 }: {
   children: React.ReactNode;
   pendingText: string;
   variant?: "primary" | "secondary";
+  fullWidth?: boolean;
 }) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" variant={variant} arrow={variant === "primary"} disabled={pending} aria-busy={pending}>
+    <Button
+      type="submit"
+      variant={variant}
+      arrow={variant === "primary"}
+      fullWidth={fullWidth}
+      disabled={pending}
+      aria-busy={pending}
+    >
       {pending ? pendingText : children}
     </Button>
   );
@@ -77,6 +86,31 @@ export function TutupKuotaButton() {
       >
         Tutup
       </button>
+    </form>
+  );
+}
+
+/** Buat tagihan lalu buka halaman bayar Midtrans (VA atau QRIS). */
+export function BayarButton({
+  planCode,
+  cycle,
+  label,
+  primary = false,
+}: {
+  planCode: string;
+  cycle: string;
+  label: string;
+  primary?: boolean;
+}) {
+  const [state, action] = useActionState<PaketState, FormData>(bayarPaket, {});
+  return (
+    <form action={action} className="flex flex-col gap-2">
+      <input type="hidden" name="planCode" value={planCode} />
+      <input type="hidden" name="cycle" value={cycle} />
+      <PendingButton variant={primary ? "primary" : "secondary"} fullWidth pendingText="Membuka halaman bayar…">
+        {label}
+      </PendingButton>
+      {state.message && <FormAlert tone="error">{state.message}</FormAlert>}
     </form>
   );
 }
