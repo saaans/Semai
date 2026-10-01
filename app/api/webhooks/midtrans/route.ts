@@ -1,8 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getMidtransConfig, getTransactionStatus } from "@/lib/billing/midtrans";
-import { isValidSignature, parseGrossAmount, paymentOutcome, type MidtransNotification } from "@/lib/billing/payment";
-import type { Json } from "@/lib/supabase/types";
+import { getMidtransConfig } from "@/lib/billing/midtrans";
+import { isValidSignature, type MidtransNotification } from "@/lib/billing/payment";
+import { processMidtransOrder } from "@/lib/billing/process";
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { Json } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,7 @@ export const dynamic = "force-dynamic";
  * Midtrans mengirim ulang.
  */
 export async function POST(request: NextRequest) {
+  console.info("[midtrans webhook] notifikasi masuk");
   const config = getMidtransConfig();
   if (!config) {
     return NextResponse.json({ error: "Pembayaran online belum diatur." }, { status: 503 });
@@ -26,61 +28,31 @@ export async function POST(request: NextRequest) {
     if (!parsed || typeof parsed !== "object") throw new Error("bukan objek");
     body = parsed as MidtransNotification & Record<string, unknown>;
   } catch {
+    console.error("[midtrans webhook] isi bukan JSON");
     return NextResponse.json({ error: "Isi notifikasi tidak valid." }, { status: 400 });
   }
 
-  const admin = createAdminClient();
   const orderId = typeof body.order_id === "string" ? body.order_id : null;
-  const signatureValid = isValidSignature(body, config.serverKey);
-
-  async function record(result: string, transactionStatus: unknown = body.transaction_status) {
-    const { error } = await admin.from("payment_events").insert({
+  if (!orderId || !isValidSignature(body, config.serverKey)) {
+    console.error("[midtrans webhook] signature tidak valid", orderId);
+    const { error } = await createAdminClient().from("payment_events").insert({
       provider: "midtrans",
       order_id: orderId,
-      transaction_status: typeof transactionStatus === "string" ? transactionStatus : null,
-      signature_valid: signatureValid,
+      transaction_status: typeof body.transaction_status === "string" ? body.transaction_status : null,
+      signature_valid: false,
       payload: body as Json,
-      result,
+      result: "signature_salah",
     });
-    if (error) console.error("[midtrans webhook] simpan event", error);
-  }
-
-  if (!signatureValid || !orderId) {
-    await record("signature_salah");
+    if (error) console.error("[midtrans webhook] simpan payment_events", error);
     return NextResponse.json({ error: "Signature tidak valid." }, { status: 401 });
   }
 
-  const status = await getTransactionStatus(config, orderId);
-  if (!status) {
-    await record("status_gagal");
-    return NextResponse.json({ error: "Gagal cek status ke Midtrans." }, { status: 500 });
-  }
-  // Notifikasi tes dari dashboard Midtrans memakai order_id yang tidak ada.
-  if (status.status_code === "404" || status.order_id !== orderId) {
-    await record("transaksi_tidak_ada", status.transaction_status);
-    return NextResponse.json({ ok: true, result: "transaksi_tidak_ada" });
-  }
-
-  const outcome = paymentOutcome(status.transaction_status, status.fraud_status);
-  if (!outcome) {
-    await record(`diabaikan:${String(status.transaction_status)}`, status.transaction_status);
-    return NextResponse.json({ ok: true, result: "diabaikan" });
-  }
-
-  const { data: result, error } = await admin.rpc("apply_payment", {
-    p_order_id: orderId,
-    p_outcome: outcome,
-    p_gross_amount: parseGrossAmount(status.gross_amount),
-    p_payment_method: typeof status.payment_type === "string" ? status.payment_type : null,
-    p_transaction_id: typeof status.transaction_id === "string" ? status.transaction_id : null,
+  const { result, retry } = await processMidtransOrder(config, orderId, {
+    payload: body as Json,
+    signatureValid: true,
+    source: "webhook",
   });
-  if (error) {
-    console.error("[midtrans webhook] apply_payment", error);
-    await record("error_database", status.transaction_status);
-    return NextResponse.json({ error: "Gagal memproses pembayaran." }, { status: 500 });
-  }
-
-  await record(result ?? "ok", status.transaction_status);
-  if (result === "nominal_beda") console.error("[midtrans webhook] nominal tidak cocok", orderId, status.gross_amount);
+  console.info("[midtrans webhook]", orderId, result);
+  if (retry) return NextResponse.json({ error: "Gagal memproses, coba kirim ulang.", result }, { status: 500 });
   return NextResponse.json({ ok: true, result });
 }

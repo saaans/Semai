@@ -14,7 +14,9 @@ import {
   yearlySaving,
   type BillingCycle,
 } from "@/lib/billing/catalog";
+import { getMidtransConfig } from "@/lib/billing/midtrans";
 import { checkoutOption, type CurrentPaidPlan } from "@/lib/billing/payment";
+import { processMidtransOrder } from "@/lib/billing/process";
 import { getBillingOverview, getPlans, type BillingOverview } from "@/lib/billing/server";
 import { daysLeft, quotaStatus } from "@/lib/billing/state";
 import { cn } from "@/lib/cn";
@@ -67,6 +69,26 @@ export default async function PaketPage({
   const cycle: BillingCycle = isBillingCycle(params.siklus) ? params.siklus : "bulanan";
 
   const supabase = await createClient();
+
+  // Kembali dari halaman bayar: cek status langsung ke Midtrans, jaga-jaga
+  // kalau webhook telat atau gagal. Hanya tagihan usaha ini (RLS owner).
+  const config = getMidtransConfig();
+  if (params.tagihan && owner.role === "owner" && config) {
+    const { data: returning } = await supabase
+      .from("invoices")
+      .select("number, status")
+      .eq("company_id", owner.companyId)
+      .eq("number", params.tagihan)
+      .maybeSingle();
+    if (returning?.status === "pending") {
+      await processMidtransOrder(config, returning.number, {
+        payload: { sumber: "halaman_paket" },
+        signatureValid: true,
+        source: "cek_status",
+      });
+    }
+  }
+
   const [overview, plans, companyPlan, { data: company }, { data: invoices }] = await Promise.all([
     getBillingOverview(owner.companyId),
     getPlans(),
