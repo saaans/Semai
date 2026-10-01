@@ -99,9 +99,10 @@ export default async function GajiPage({ searchParams }: { searchParams: Promise
 
 function Totals({ items }: { items: { label: string; value: string; hint?: string }[] }) {
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      {items.map((item) => (
-        <Card key={item.label} className="p-4 sm:p-5">
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+      {items.map((item, i) => (
+        // Kartu pertama (total dibayar) selebar layar di HP.
+        <Card key={item.label} className={i === 0 ? "col-span-2 p-4 sm:p-5 lg:col-span-1" : "p-4 sm:p-5"}>
           <p className="text-sm text-smoke">{item.label}</p>
           <p className="mt-1 font-mono text-xl text-ink sm:text-2xl">{item.value}</p>
           {item.hint && <p className="mt-1 text-xs text-ash">{item.hint}</p>}
@@ -136,10 +137,9 @@ function PreviewView({ preview, month, monthLabel: label }: { preview: PayrollPr
 
       <Totals
         items={[
-          { label: "Karyawan", value: `${preview.employees.length}` },
-          { label: "Pendapatan", value: formatRupiah(preview.totals.gross) },
-          { label: "Potongan", value: formatRupiah(preview.totals.deductions), hint: "Termasuk cicilan kasbon" },
           { label: "Total dibayar", value: formatRupiah(preview.totals.net) },
+          { label: "Karyawan", value: `${preview.employees.length}` },
+          { label: "Potongan", value: formatRupiah(preview.totals.deductions), hint: "Termasuk cicilan kasbon" },
         ]}
       />
 
@@ -256,10 +256,9 @@ async function LockedView({
 
       <Totals
         items={[
-          { label: "Karyawan", value: `${run.payslips.length}` },
-          { label: "Pendapatan", value: formatRupiah(run.totalGross) },
-          { label: "Potongan", value: formatRupiah(run.totalDeductions), hint: "Termasuk cicilan kasbon" },
           { label: "Total dibayar", value: formatRupiah(run.totalNet) },
+          { label: "Karyawan", value: `${run.payslips.length}` },
+          { label: "Potongan", value: formatRupiah(run.totalDeductions), hint: "Termasuk cicilan kasbon" },
         ]}
       />
 
