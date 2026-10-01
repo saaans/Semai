@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ComponentProps } from "react";
 import { cn } from "@/lib/cn";
+import { ButtonChip } from "./button-chip";
 
 type Variant = "primary" | "secondary";
 
@@ -37,28 +38,6 @@ export function buttonClasses({
   );
 }
 
-function ArrowChip() {
-  return (
-    <span
-      aria-hidden
-      className="flex size-8 shrink-0 items-center justify-center rounded-[7px] bg-on-accent text-accent transition-transform duration-150 group-hover:translate-x-0.5"
-    >
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M5 12h14M13 6l6 6-6 6" />
-      </svg>
-    </span>
-  );
-}
-
 export type ButtonProps = ComponentProps<"button"> & StyleProps;
 
 export function Button({
@@ -80,7 +59,7 @@ export function Button({
       <span className={cn(showArrow && "flex-1 pl-0.5 text-left")}>
         {children}
       </span>
-      {showArrow && <ArrowChip />}
+      {showArrow && <ButtonChip />}
     </button>
   );
 }
@@ -105,7 +84,7 @@ export function ButtonLink({
       <span className={cn(showArrow && "flex-1 pl-0.5 text-left")}>
         {children}
       </span>
-      {showArrow && <ArrowChip />}
+      {showArrow && <ButtonChip />}
     </Link>
   );
 }
