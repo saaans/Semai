@@ -33,7 +33,8 @@ export function AbsenCard({
   companyId,
   timezone,
   mode,
-  location,
+  remote,
+  location: officeLocation,
   today,
   isWorkDay,
 }: {
@@ -41,11 +42,15 @@ export function AbsenCard({
   companyId: string;
   timezone: string;
   mode: AttendanceMode;
+  /** Absen remote berlaku: tanpa cek radius, lokasi tetap dicatat. */
+  remote: boolean;
   location: AbsenLocation | null;
   today: TodayState;
   isWorkDay: boolean;
 }) {
   const router = useRouter();
+  // Karyawan remote: radius tidak dipakai, jadi lokasi kantor tidak dibandingkan.
+  const location = remote ? null : officeLocation;
   const [step, setStep] = useState<Step>("idle");
   const [action, setAction] = useState<Action>("masuk");
   const [photo, setPhoto] = useState<Photo | null>(null);
@@ -327,7 +332,7 @@ export function AbsenCard({
   const blocked =
     nextAction === null
       ? null
-      : !location
+      : !location && !remote
         ? "Lokasi absenmu belum diatur. Minta pemilik usaha mengatur lokasi absen."
         : nextAction === "masuk" && !isWorkDay
           ? "Hari ini bukan hari kerjamu. Absen hanya bisa di hari kerja sesuai jadwal."
@@ -401,7 +406,7 @@ export function AbsenCard({
               {busy ? "Memproses foto…" : cameraReady ? "Ambil foto" : "Menyiapkan kamera…"}
             </Button>
           )}
-          <GpsLine position={position} gpsError={gpsError} distance={distance} location={location} />
+          <GpsLine position={position} gpsError={gpsError} distance={distance} location={location} remote={remote} />
           <Button variant="secondary" arrow={false} onClick={cancel}>
             Batal
           </Button>
@@ -416,7 +421,7 @@ export function AbsenCard({
             alt="Selfie untuk absen"
             className="aspect-3/4 w-full rounded-card bg-ink object-cover"
           />
-          <GpsLine position={position} gpsError={gpsError} distance={distance} location={location} />
+          <GpsLine position={position} gpsError={gpsError} distance={distance} location={location} remote={remote} />
           <Button
             fullWidth
             className="min-h-14 text-base"
@@ -503,11 +508,13 @@ function GpsLine({
   gpsError,
   distance,
   location,
+  remote,
 }: {
   position: Position | null;
   gpsError: string | null;
   distance: number | null;
   location: AbsenLocation | null;
+  remote: boolean;
 }) {
   if (gpsError && !position) return <p className="text-sm text-danger">{gpsError}</p>;
   if (!position) return <p className="text-sm text-smoke">Mencari lokasi…</p>;
@@ -516,6 +523,7 @@ function GpsLine({
   const outside = location && distance !== null && distance > location.radiusM;
   return (
     <div className="flex flex-col gap-1 text-sm">
+      {remote && <p className="text-smoke">Lokasi terbaca. Absen remote: lokasi dicatat, tanpa batas radius.</p>}
       {location && distance !== null && (
         <p className={outside ? "text-danger" : "text-smoke"}>
           {outside

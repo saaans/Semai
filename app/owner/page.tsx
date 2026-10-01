@@ -7,6 +7,7 @@ import { Tag } from "@/components/ui/tag";
 import { getTodayBoard, type TodayEntry } from "@/lib/attendance/owner";
 import { dayLabel } from "@/lib/attendance/recap";
 import { requireOwner } from "@/lib/auth/session";
+import { getRemoteStatus } from "@/lib/employees/remote";
 import { formatDate, formatMinutes, formatTime, timezoneLabel } from "@/lib/format";
 import { parseProgress } from "@/lib/onboarding/data";
 import { createClient } from "@/lib/supabase/server";
@@ -21,10 +22,12 @@ export default async function OwnerPage() {
   const owner = await requireOwner();
   if (!owner.onboardingCompleted) redirect("/owner/onboarding");
 
-  const [board, pendingPlan] = await Promise.all([
+  const [board, pendingPlan, remote] = await Promise.all([
     getTodayBoard(owner.companyId),
     getPendingPaidPlan(owner.companyId),
+    getRemoteStatus(owner.companyId),
   ]);
+  const remoteCount = board.entries.filter((e) => e.isRemote).length;
   const tz = board.timezone;
 
   const summary = [
@@ -75,6 +78,23 @@ export default async function OwnerPage() {
               </li>
             ))}
           </ul>
+        </Card>
+      )}
+
+      {remoteCount > 0 && (remote.graceUntil || !remote.allowed) && (
+        <Card>
+          <Tag tone="outline">Absen remote</Tag>
+          <CardTitle className="mt-3">
+            {remote.graceUntil
+              ? `Absen remote berakhir ${formatDate(remote.graceUntil, tz)}`
+              : "Absen remote tidak berlaku"}
+          </CardTitle>
+          <CardDescription>
+            {remoteCount} karyawan ditandai kerja remote, tapi paket usaha sekarang Benih.{" "}
+            {remote.graceUntil
+              ? "Setelah tanggal itu mereka wajib absen dalam radius lokasi. Atur lokasi absen mereka, atau upgrade ke Dasar supaya tetap bisa absen dari mana saja."
+              : "Mereka sekarang wajib absen dalam radius lokasi. Pastikan lokasi absen mereka sudah diatur."}
+          </CardDescription>
         </Card>
       )}
 
@@ -157,6 +177,7 @@ function EntryCard({
             </Link>
             <p className="truncate text-sm text-smoke">
               {[
+                entry.isRemote ? "Remote" : null,
                 entry.position,
                 entry.workDate !== today ? `Shift ${dayLabel(entry.workDate)}` : null,
                 entry.status === "belum" && entry.scheduleStart ? `Jadwal masuk ${entry.scheduleStart}` : null,
@@ -168,7 +189,7 @@ function EntryCard({
           <EntryTag entry={entry} />
         </div>
         {entry.attendance && (
-          <AbsenInfo attendance={entry.attendance} timezone={timezone} name={entry.name} radiusM={entry.radiusM} />
+          <AbsenInfo attendance={entry.attendance} timezone={timezone} name={entry.name} radiusM={entry.radiusM} remote={entry.isRemote} />
         )}
         <div className="-mb-2 flex items-center justify-end gap-2">
           <KoreksiButton

@@ -161,6 +161,8 @@ export type TodayEntry = {
   scheduleStart: string | null;
   /** Belum absen padahal sudah lewat jam masuk + toleransi. */
   pastStart: boolean;
+  /** Ditandai kerja remote (absen tanpa cek radius selama paket mengizinkan). */
+  isRemote: boolean;
   radiusM: number | null;
   locationName: string | null;
   attendance: OwnerAttendance | null;
@@ -203,7 +205,7 @@ export async function getTodayBoard(companyId: string): Promise<TodayBoard> {
       supabase
         .from("employees")
         .select(
-          "id, full_name, position, locations (name, radius_m, is_active), work_schedules (start_time, end_time, work_days, late_tolerance_min)",
+          "id, full_name, position, is_remote, locations (name, radius_m, is_active), work_schedules (start_time, end_time, work_days, late_tolerance_min)",
         )
         .eq("company_id", companyId)
         .eq("status", "aktif")
@@ -261,6 +263,7 @@ export async function getTodayBoard(companyId: string): Promise<TodayBoard> {
       status,
       scheduleStart: ws ? ws.start_time.slice(0, 5).replace(":", ".") : null,
       pastStart,
+      isRemote: employee.is_remote,
       radiusM: location?.radius_m ?? null,
       locationName: location?.name ?? null,
       attendance: row ? toOwnerAttendance(row, urls) : null,
@@ -296,6 +299,7 @@ type EmployeeForRecap = {
   full_name: string;
   position: string | null;
   status: string;
+  is_remote: boolean;
   activated_at: string | null;
   deactivated_at: string | null;
   created_at: string;
@@ -303,7 +307,7 @@ type EmployeeForRecap = {
 };
 
 const EMPLOYEE_RECAP_COLUMNS =
-  "id, full_name, position, status, activated_at, deactivated_at, created_at, work_schedules (start_time, end_time, work_days)";
+  "id, full_name, position, status, is_remote, activated_at, deactivated_at, created_at, work_schedules (start_time, end_time, work_days)";
 
 /** Rentang hari yang dihitung untuk satu karyawan dalam bulan ini. */
 function employeeRange(
@@ -414,7 +418,7 @@ export type EmployeeMonthDay =
   | { date: string; kind: "tidak_masuk" };
 
 export type EmployeeMonth = {
-  employee: { id: string; name: string; position: string | null; active: boolean };
+  employee: { id: string; name: string; position: string | null; active: boolean; isRemote: boolean };
   timezone: string;
   attendanceMode: AttendanceMode;
   today: string;
@@ -461,6 +465,7 @@ export async function getEmployeeMonth(
       name: employee.full_name,
       position: employee.position,
       active: employee.status === "aktif",
+      isRemote: employee.is_remote,
     },
     timezone: company.timezone,
     attendanceMode: company.attendanceMode,

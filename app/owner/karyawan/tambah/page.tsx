@@ -3,6 +3,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireOwner } from "@/lib/auth/session";
 import { getEmployeeQuota } from "@/lib/employees/quota";
+import { hasFeature, minLevelLabel } from "@/lib/plans";
+import { getCompanyPlan } from "@/lib/plans-server";
 import { TambahForm } from "../_components/tambah-form";
 import { UpgradeCard } from "../_components/upgrade-card";
 
@@ -11,7 +13,7 @@ export const metadata: Metadata = { title: "Tambah karyawan" };
 export default async function TambahKaryawanPage() {
   const owner = await requireOwner();
   if (!owner.onboardingCompleted) redirect("/owner/onboarding");
-  const quota = await getEmployeeQuota(owner.companyId);
+  const [quota, plan] = await Promise.all([getEmployeeQuota(owner.companyId), getCompanyPlan(owner.companyId)]);
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-6">
@@ -28,7 +30,12 @@ export default async function TambahKaryawanPage() {
       {quota.full ? (
         <UpgradeCard planName={quota.planName} limit={quota.limit} />
       ) : (
-        <TambahForm planName={quota.planName} limit={quota.limit} />
+        <TambahForm
+          planName={quota.planName}
+          limit={quota.limit}
+          remoteUnlocked={hasFeature(plan, "absen_remote")}
+          remotePlanLabel={minLevelLabel(plan, "absen_remote") ?? "Dasar"}
+        />
       )}
     </div>
   );

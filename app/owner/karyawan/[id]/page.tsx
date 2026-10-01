@@ -5,9 +5,13 @@ import { Card } from "@/components/ui/card";
 import { formatPhone } from "@/lib/auth/schemas";
 import { requireOwner } from "@/lib/auth/session";
 import { getEmployeeQuota } from "@/lib/employees/quota";
+import { getRemoteStatus } from "@/lib/employees/remote";
+import { hasFeature, minLevelLabel } from "@/lib/plans";
+import { getCompanyPlan } from "@/lib/plans-server";
 import { formatDate, formatRupiah } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { KaryawanActions } from "../_components/karyawan-actions";
+import { RemoteToggle } from "../_components/remote-toggle";
 import { StatusTag } from "../_components/status-tag";
 
 export const metadata: Metadata = { title: "Detail karyawan" };
@@ -22,15 +26,17 @@ export default async function DetailKaryawanPage({ params }: { params: Promise<{
   if (!UUID.test(id)) notFound();
 
   const supabase = await createClient();
-  const [{ data: employee }, { data: company }, quota] = await Promise.all([
+  const [{ data: employee }, { data: company }, quota, plan, remote] = await Promise.all([
     supabase
       .from("employees")
-      .select("id, full_name, phone, position, status, base_salary, activated_at, invite_expires_at, created_at")
+      .select("id, full_name, phone, position, status, base_salary, activated_at, invite_expires_at, created_at, is_remote")
       .eq("id", id)
       .eq("company_id", owner.companyId)
       .maybeSingle(),
     supabase.from("companies").select("timezone").eq("id", owner.companyId).single(),
     getEmployeeQuota(owner.companyId),
+    getCompanyPlan(owner.companyId),
+    getRemoteStatus(owner.companyId),
   ]);
   if (!employee) notFound();
 
@@ -78,6 +84,23 @@ export default async function DetailKaryawanPage({ params }: { params: Promise<{
           Belum aktivasi. Link undangan hanya tampil sekali saat dibuat; kalau karyawan kehilangan
           link, buat link baru.
         </p>
+      )}
+      {status !== "nonaktif" && (
+        <RemoteToggle
+          employeeId={employee.id}
+          isRemote={employee.is_remote}
+          unlocked={hasFeature(plan, "absen_remote")}
+          planLabel={minLevelLabel(plan, "absen_remote") ?? "Dasar"}
+          graceNote={
+            !employee.is_remote
+              ? null
+              : remote.graceUntil
+                ? `Paket usaha sudah turun ke Benih. Absen remote masih berlaku sampai ${formatDate(remote.graceUntil, tz)}, setelah itu kembali wajib dalam radius lokasi.`
+                : !remote.allowed
+                  ? "Absen remote tidak berlaku karena paket usaha Benih. Karyawan ini sekarang wajib absen dalam radius lokasi."
+                  : null
+          }
+        />
       )}
       <KaryawanActions
         employeeId={employee.id}

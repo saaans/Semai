@@ -24,8 +24,18 @@ export type TodayState =
     }
   | { kind: "tercatat"; status: string };
 
+export type RemoteInfo = {
+  /** Absen tanpa cek radius berlaku sekarang. */
+  active: boolean;
+  /** Masa tenggang setelah paket turun ke Benih. */
+  graceUntil: string | null;
+  /** Ditandai remote tapi tidak berlaku lagi (paket Benih). */
+  ended: boolean;
+};
+
 export type AbsenHome = {
   mode: AttendanceMode;
+  remote: RemoteInfo;
   location: AbsenLocation | null;
   schedule: (ScheduleLite & { name: string }) | null;
   workDate: string;
@@ -43,7 +53,7 @@ export async function getAbsenHome(employeeId: string, timezone: string): Promis
   const { data: employee, error } = await supabase
     .from("employees")
     .select(
-      "companies (attendance_mode), locations (name, latitude, longitude, radius_m, is_active), work_schedules (name, start_time, end_time, work_days)",
+      "company_id, is_remote, companies (attendance_mode), locations (name, latitude, longitude, radius_m, is_active), work_schedules (name, start_time, end_time, work_days)",
     )
     .eq("id", employeeId)
     .single();
@@ -71,6 +81,20 @@ export async function getAbsenHome(employeeId: string, timezone: string): Promis
       : null;
   const mode: AttendanceMode =
     employee.companies?.attendance_mode === "masuk" ? "masuk" : "masuk_pulang";
+
+  let remote: RemoteInfo = { active: false, graceUntil: null, ended: false };
+  if (employee.is_remote) {
+    const { data: status, error: statusError } = await supabase.rpc("remote_attendance_status", {
+      p_company_id: employee.company_id,
+    });
+    if (statusError) console.error("[getAbsenHome] remote", statusError);
+    const row = status?.[0];
+    remote = {
+      active: Boolean(row?.allowed),
+      graceUntil: row?.grace_until ?? null,
+      ended: !statusError && !row?.allowed,
+    };
+  }
 
   const now = new Date();
   const workDate = currentWorkDate(now, timezone, schedule);
@@ -114,6 +138,7 @@ export async function getAbsenHome(employeeId: string, timezone: string): Promis
 
   return {
     mode,
+    remote,
     location,
     schedule,
     workDate,

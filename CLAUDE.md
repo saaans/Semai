@@ -83,7 +83,7 @@ Fitur ditentukan oleh **level** (`benih`, `dasar`, `plus`). Rentang karyawan han
 | Rindang | 31–50 | Rp199.000 | Rp399.000 |
 | Hutan | 51+ | Custom | Custom |
 
-Feature keys: `kasbon`, `shift`, `cuti`, `multi_lokasi`, `wa_auto`, `export`, `import_excel`, `bpjs_pph21`, `thr`, `admin_tambahan`, `slip_tanpa_watermark`.
+Feature keys: `kasbon`, `shift`, `cuti`, `multi_lokasi`, `wa_auto`, `export`, `import_excel`, `bpjs_pph21`, `thr`, `admin_tambahan`, `slip_tanpa_watermark`, `absen_remote`.
 
 **Fitur terkunci selalu terlihat** di menu dengan ikon gembok + label paket minimum. Klik membuka halaman pratinjau (contoh data diburamkan) dengan satu kartu ajakan upgrade. Maksimal satu ajakan per halaman. Jangan pernah popup di alur absen.
 

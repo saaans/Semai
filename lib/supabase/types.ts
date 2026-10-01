@@ -383,6 +383,7 @@ export type Database = {
           id: string;
           invite_expires_at: string | null;
           invite_token_hash: string | null;
+          is_remote: boolean;
           joined_on: string | null;
           location_id: string | null;
           phone: string;
@@ -402,6 +403,7 @@ export type Database = {
           id?: string;
           invite_expires_at?: string | null;
           invite_token_hash?: string | null;
+          is_remote?: boolean;
           joined_on?: string | null;
           location_id?: string | null;
           phone: string;
@@ -421,6 +423,7 @@ export type Database = {
           id?: string;
           invite_expires_at?: string | null;
           invite_token_hash?: string | null;
+          is_remote?: boolean;
           joined_on?: string | null;
           location_id?: string | null;
           phone?: string;
@@ -1140,6 +1143,14 @@ export type Database = {
           p_phone: string | null;
         };
         Returns: Database["public"]["Tables"]["companies"]["Row"][];
+      };
+      remote_attendance_status: {
+        Args: { p_company_id: string };
+        Returns: { allowed: boolean; grace_until: string | null }[];
+      };
+      set_employee_remote: {
+        Args: { p_employee_id: string; p_remote: boolean };
+        Returns: Database["public"]["Tables"]["employees"]["Row"][];
       };
       renew_employee_invite: {
         Args: { p_employee_id: string };

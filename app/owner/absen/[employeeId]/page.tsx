@@ -56,7 +56,12 @@ export default async function AbsenKaryawanPage({
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex flex-col gap-2">
-          {!employee.active && <Tag tone="outline" className="self-start">Nonaktif</Tag>}
+          {(!employee.active || employee.isRemote) && (
+            <div className="flex gap-2">
+              {!employee.active && <Tag tone="outline">Nonaktif</Tag>}
+              {employee.isRemote && <Tag tone="outline">Remote</Tag>}
+            </div>
+          )}
           <h1 className="text-3xl sm:text-4xl">{employee.name}</h1>
           {employee.position && <p className="text-smoke">{employee.position}</p>}
         </div>
@@ -98,7 +103,7 @@ export default async function AbsenKaryawanPage({
                   <span className="font-medium text-ink">{dayLabel(day.date)}</span>
                   <AbsenStatusTag attendance={attendance} />
                 </div>
-                {attendance && <AbsenInfo attendance={attendance} timezone={timezone} name={employee.name} />}
+                {attendance && <AbsenInfo attendance={attendance} timezone={timezone} name={employee.name} remote={employee.isRemote} />}
                 <div className="-my-1 flex flex-wrap items-center justify-end gap-2">
                   {attendance?.overtimeStatus === "menunggu" && <LemburActions attendanceId={attendance.id} />}
                   <KoreksiButton

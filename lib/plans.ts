@@ -19,6 +19,7 @@ export const FEATURE_KEYS = [
   "thr",
   "admin_tambahan",
   "slip_tanpa_watermark",
+  "absen_remote",
 ] as const;
 export type FeatureKey = (typeof FEATURE_KEYS)[number];
 

@@ -19,6 +19,8 @@ export type KaryawanFormState = {
   /** Batas karyawan paket terlewati: tampilkan layar upgrade. */
   limitReached?: boolean;
   invite?: InviteResult;
+  /** Info tambahan di samping link undangan, misalnya remote gagal disimpan. */
+  notice?: string;
 };
 
 const SAVE_FAILED = "Gagal menyimpan. Periksa koneksi internet, lalu coba lagi.";
@@ -85,6 +87,7 @@ export async function tambahKaryawan(
     phone: text(formData, "phone"),
     position: text(formData, "position"),
     baseSalary: text(formData, "baseSalary"),
+    remote: text(formData, "remote"),
   };
   const parsed = tambahKaryawanSchema.safeParse(values);
   if (!parsed.success) return { errors: fieldErrors(parsed.error), values };
@@ -107,8 +110,23 @@ export async function tambahKaryawan(
   const row = data[0];
   if (!row) return { message: SAVE_FAILED, values };
 
+  let notice: string | undefined;
+  if (values.remote === "ya") {
+    const { error: remoteError } = await supabase.rpc("set_employee_remote", {
+      p_employee_id: row.employee_id,
+      p_remote: true,
+    });
+    if (remoteError) {
+      if (remoteError.code !== "P0001") console.error("[tambahKaryawan] remote", remoteError);
+      notice = `Karyawan tersimpan, tapi kerja remote belum aktif: ${
+        remoteError.code === "P0001" ? remoteError.message : "coba nyalakan lagi dari halaman detail karyawan."
+      }`;
+    }
+  }
+
   revalidatePath("/owner/karyawan");
   return {
+    notice,
     invite: await inviteFor(
       owner.companyId,
       { id: row.employee_id, full_name: parsed.data.fullName, phone: parsed.data.phone },
@@ -218,4 +236,31 @@ export async function batalkanUndangan(
 
   revalidatePath("/owner/karyawan");
   redirect("/owner/karyawan");
+}
+
+export type RemoteState = { message?: string; saved?: boolean };
+
+/** Nyalakan/matikan absen remote. Menyalakan butuh paket berbayar (dicek di RPC). */
+export async function ubahRemote(_prev: RemoteState, formData: FormData): Promise<RemoteState> {
+  await requireManager();
+  const employeeId = text(formData, "employeeId");
+  const remote = text(formData, "remote");
+  if (!/^[0-9a-f-]{36}$/i.test(employeeId) || (remote !== "ya" && remote !== "tidak")) {
+    return { message: "Data tidak dikenal. Muat ulang halaman lalu coba lagi." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_employee_remote", {
+    p_employee_id: employeeId,
+    p_remote: remote === "ya",
+  });
+  if (error) {
+    if (error.code !== "P0001") console.error("[ubahRemote]", error);
+    return { message: error.code === "P0001" ? error.message : SAVE_FAILED };
+  }
+
+  revalidatePath(`/owner/karyawan/${employeeId}`);
+  revalidatePath("/owner/karyawan");
+  revalidatePath("/owner");
+  return { saved: true };
 }

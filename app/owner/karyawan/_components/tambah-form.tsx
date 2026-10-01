@@ -7,18 +7,26 @@ import { SubmitButton } from "@/app/(auth)/_components/submit-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Tag } from "@/components/ui/tag";
 import { tambahKaryawan, type KaryawanFormState } from "../actions";
 import { InviteCard } from "./invite-card";
 import { UpgradeCard } from "./upgrade-card";
 
-type Props = { planName: string; limit: number | null };
+type Props = {
+  planName: string;
+  limit: number | null;
+  /** Paket punya absen remote. false = tampil terkunci. */
+  remoteUnlocked: boolean;
+  remotePlanLabel: string;
+};
 
-function Form({ planName, limit, onAgain }: Props & { onAgain: () => void }) {
+function Form({ planName, limit, remoteUnlocked, remotePlanLabel, onAgain }: Props & { onAgain: () => void }) {
   const [state, action] = useActionState<KaryawanFormState, FormData>(tambahKaryawan, {});
 
   if (state.invite) {
     return (
       <div className="flex flex-col gap-3">
+        {state.notice && <FormAlert tone="error">{state.notice}</FormAlert>}
         <InviteCard invite={state.invite} />
         <Button variant="secondary" arrow={false} fullWidth onClick={onAgain}>
           Tambah karyawan lain
@@ -75,6 +83,25 @@ function Form({ planName, limit, onAgain }: Props & { onAgain: () => void }) {
           defaultValue={state.values?.baseSalary}
           error={state.errors?.baseSalary}
         />
+        {remoteUnlocked ? (
+          <label className="flex min-h-11 cursor-pointer items-start gap-3 rounded-button border border-stone bg-canvas px-3.5 py-3 text-sm">
+            <input type="checkbox" name="remote" value="ya" className="mt-0.5 size-4 accent-ink" defaultChecked={state.values?.remote === "ya"} />
+            <span className="flex flex-col gap-0.5">
+              <span className="flex items-center gap-2 font-medium text-ink">
+                Kerja remote <Tag tone="outline">Premium · {remotePlanLabel}</Tag>
+              </span>
+              <span className="text-smoke">Absen dari mana saja tanpa batas radius. Selfie dan lokasi tetap tercatat.</span>
+            </span>
+          </label>
+        ) : (
+          <Link
+            href="/owner/fitur/absen_remote"
+            className="flex min-h-11 items-center justify-between gap-3 rounded-button border border-dashed border-stone px-3.5 py-3 text-sm text-graphite hover:border-ash"
+          >
+            <span>Kerja remote</span>
+            <Tag>Premium · {remotePlanLabel}</Tag>
+          </Link>
+        )}
         <SubmitButton pendingText="Menyimpan…">Simpan dan buat link undangan</SubmitButton>
       </form>
     </Card>
