@@ -2,6 +2,7 @@
 
 import { redirect, unstable_rethrow } from "next/navigation";
 import { fieldErrors } from "@/lib/auth/schemas";
+import { safeNextPath } from "@/lib/auth/session";
 import { signInWithPin } from "@/lib/employees/login";
 import {
   employeeEmail,
@@ -41,6 +42,12 @@ function text(formData: FormData, key: string): string {
   return typeof value === "string" ? value : "";
 }
 
+/** Tujuan setelah masuk: hanya halaman di dalam /app (misalnya link slip dari WA). */
+function employeeNextPath(next: string): string | null {
+  const path = safeNextPath(next);
+  return path && path.startsWith("/app/") ? path : null;
+}
+
 /** Masuk karyawan: nomor HP + PIN. */
 async function masukKaryawanImpl(formData: FormData): Promise<FormState> {
   const values = { phone: text(formData, "phone") };
@@ -64,7 +71,7 @@ async function masukKaryawanImpl(formData: FormData): Promise<FormState> {
     };
   }
 
-  redirect("/app");
+  redirect(employeeNextPath(text(formData, "next")) ?? "/app");
 }
 
 /**

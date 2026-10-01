@@ -7,11 +7,12 @@ import { Input } from "@/components/ui/input";
 import { masukKaryawan, type FormState } from "../actions";
 import { PinInput } from "../_components/pin-input";
 
-export function MasukKaryawanForm() {
+export function MasukKaryawanForm({ next }: { next?: string }) {
   const [state, action] = useActionState<FormState, FormData>(masukKaryawan, {});
 
   return (
     <form action={action} className="flex flex-col gap-4" noValidate>
+      {next && <input type="hidden" name="next" value={next} />}
       {state.message && <FormAlert tone="error">{state.message}</FormAlert>}
       <Input
         label="Nomor HP"
