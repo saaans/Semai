@@ -8,8 +8,9 @@ export const LEGAL = {
   berlakuSejak: "2026-10-01",
   penyelenggara: "[NAMA PT PERORANGAN]",
   alamat: "[ALAMAT LENGKAP PENYELENGGARA]",
-  emailPrivasi: "privasi@semai.id",
-  emailBantuan: "bantuan@semai.id",
+  /** Domain belum final (teamsemai.com atau teamsemai.id). */
+  emailPrivasi: "privasi@teamsemai.com",
+  emailBantuan: "bantuan@teamsemai.com",
   lokasiServer: "Singapura",
   /** Hari sampai data usaha dihapus permanen setelah owner minta hapus akun. */
   hapusSetelahHari: 30,
