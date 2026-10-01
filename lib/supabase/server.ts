@@ -9,8 +9,9 @@ import type { Database } from "./types";
  * Buat baru di setiap request, jangan disimpan di variabel global.
  */
 export async function createClient() {
-  const { url, anonKey } = getSupabaseEnv();
+  // cookies() dulu supaya halaman yang memakai client ini selalu dinamis.
   const cookieStore = await cookies();
+  const { url, anonKey } = getSupabaseEnv();
 
   return createServerClient<Database>(url, anonKey, {
     cookies: {
