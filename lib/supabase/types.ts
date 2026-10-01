@@ -967,6 +967,10 @@ export type Database = {
     };
     Functions: {
       company_level: { Args: { p_company_id: string }; Returns: string };
+      complete_onboarding: {
+        Args: { p_company_id: string; p_choice: string; p_plan_code?: string };
+        Returns: undefined;
+      };
       ensure_owner_company: { Args: Record<PropertyKey, never>; Returns: string };
       has_feature: {
         Args: { p_company_id: string; p_feature_key: string };
