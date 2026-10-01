@@ -151,3 +151,23 @@
     animation-duration: 3s;
   }
 }
+
+/*
+ * Zona gelap: palet mode gelap untuk satu area saja, apa pun mode HP-nya.
+ * Dipakai halaman masuk tim Semai supaya tidak tertukar dengan login owner.
+ */
+.zona-gelap {
+  --canvas: #0f0e0d;
+  --taupe: #1b1a18;
+  --stone: #2e2b28;
+  --ink: #f7f5f2;
+  --graphite: #d6d1ca;
+  --smoke: #a8a29a;
+  --ash: #78726a;
+  --danger: #ff8a7a;
+  --gold: #c9972f;
+
+  color-scheme: dark;
+  background-color: var(--canvas);
+  color: var(--ink);
+}
